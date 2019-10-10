@@ -32,9 +32,17 @@ class City():
 
 if __name__ == "__main__":
 
+    def matrix_print(matrix):
+        # Красивый вывод матрицы
+        for i in range(len(matrix)):
+            for j in range(len(matrix[i])):
+                print("{:4.1f}".format(matrix[i][j]), sep=' ', end=' ')
+            print('', end='\n')
+
+
     n = len(points)  # Размерность матрицы
     cities = [City(i, point[0], point[1]) for i, point in enumerate(points)]
-    distances = np.zeros((n, n))
+    distances = np.zeros((n, n), dtype=float)
 
     for i in np.arange(0, n, 1):
         for j in np.arange(i, n, 1):
@@ -45,4 +53,29 @@ if __name__ == "__main__":
             distances[i, j] = City.distance(cities[i], cities[j])
             distances[j][i] = distances[i][j]
 
-    print(distances)
+    matrix_print(distances)
+
+
+
+
+
+    # import time
+    #
+    # def timer(f):
+    #     def tmp(*args, **kwargs):
+    #         t = time.time()
+    #         res = f(*args, **kwargs)
+    #         print("Время выполнения функции: {}".format(time.time() - t))
+    #         return res
+    #
+    #     return tmp
+    #
+    #
+    # @timer
+    # def func(x, y):
+    #     return sqrt(x**2 + y**2)
+    #
+    #
+    # res1 = func(3, 4)
+    # print("res = {}".format(res1))
+
