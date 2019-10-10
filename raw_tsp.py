@@ -98,5 +98,5 @@ if __name__ == "__main__":
     mat = mat - di  # Вычесть из каждого столбца матрицы mat вектор di
 
     dj = np.min(mat, axis=0)  # min элемент по столбцам
-    mat = mat - dj  # Вычесть из каждой строки матрицы mat вектор dj
+    mat = mat - dj  # Вычесть из каждой строки матрицы mat вектор dj 
     print(mat)
