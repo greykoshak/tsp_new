@@ -70,11 +70,24 @@ class SetMatrix:
 
 
 if __name__ == "__main__":
+
+    def graph_edge(matrix):
+        for i in range(len(matrix)):
+            for j in range(len(matrix)):
+                if matrix[i, j] == 0:
+                    
+
+        return [1, 2]
+
     # mat = DefineMatrix(points).build_matrix()
     # DefineMatrix.matrix_print(mat)
 
     mat = SetMatrix().set_diagonal()
     # DefineMatrix.matrix_print(mat)
+
+    plans = list()  # Планы
+    est_plans = list()  # Оценка планов
+    root = list()   # Маршрут комивояжера
 
     # Считаем первичную оценку нулевого варианта F0 = mat(0,1) + mat(1,2) + mat(2,3) +
     # mat(3,4) + mat(4,0) = 10 + 10 +20 + 15 + 10 = 65
@@ -95,8 +108,18 @@ if __name__ == "__main__":
 
     di = np.min(mat, axis=1)  # min элемент по строкам
     di.shape = (n, 1)   # Преобразование вектора-строки в вектор-столбец
-    mat = mat - di  # Вычесть из каждого столбца матрицы mat вектор di
+    mat = mat - di  # Редукция строк
 
     dj = np.min(mat, axis=0)  # min элемент по столбцам
-    mat = mat - dj  # Вычесть из каждой строки матрицы mat вектор dj 
+    mat = mat - dj  # Редукция столбцов
+
+    d = di.sum() + dj.sum()
+
+    est_plans.append(d)
+
+    # Оценка нулевых клеток, поиск ребра для оценки
+    edge = graph_edge(mat)
+
     print(mat)
+    print(d)
+    print(edge)
