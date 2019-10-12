@@ -64,6 +64,7 @@ class SetMatrix:
         self.set_diagonal()
 
     def set_diagonal(self):
+        """ Диагональные элементы исключаем """
         for i in range(len(self.mat)):
             self.mat[i][i] = float('inf')
         return self.mat
@@ -72,12 +73,25 @@ class SetMatrix:
 if __name__ == "__main__":
 
     def graph_edge(matrix):
-        for i in range(len(matrix)):
-            for j in range(len(matrix)):
-                if matrix[i, j] == 0:
-                    
+        """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
 
-        return [1, 2]
+        find = np.where(matrix == 0)  # Найти все нулевые элементы
+        v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
+        max_value = list()  # Оценки нулевых точек
+        point = list()  # Координаты нулевых точек
+        inf = float('inf')
+
+        for coord in v_null:
+            matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
+            di = mat[coord[0]:coord[0] + 1, ].min()     # min по строке
+            dj = mat[:, coord[1]].min()                 # min по столбцу
+            max_value.append(di + dj)
+            point.append(coord)
+            matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
+        idx = max_value.index(max(max_value))
+
+        return point[idx]
+
 
     # mat = DefineMatrix(points).build_matrix()
     # DefineMatrix.matrix_print(mat)
@@ -87,7 +101,7 @@ if __name__ == "__main__":
 
     plans = list()  # Планы
     est_plans = list()  # Оценка планов
-    root = list()   # Маршрут комивояжера
+    root = list()  # Маршрут комивояжера
 
     # Считаем первичную оценку нулевого варианта F0 = mat(0,1) + mat(1,2) + mat(2,3) +
     # mat(3,4) + mat(4,0) = 10 + 10 +20 + 15 + 10 = 65
@@ -107,19 +121,18 @@ if __name__ == "__main__":
     #     dj[0][i] = mat[:, i].min()
 
     di = np.min(mat, axis=1)  # min элемент по строкам
-    di.shape = (n, 1)   # Преобразование вектора-строки в вектор-столбец
+    di.shape = (n, 1)  # Преобразование вектора-строки в вектор-столбец
     mat = mat - di  # Редукция строк
 
     dj = np.min(mat, axis=0)  # min элемент по столбцам
     mat = mat - dj  # Редукция столбцов
 
     d = di.sum() + dj.sum()
-
     est_plans.append(d)
 
     # Оценка нулевых клеток, поиск ребра для оценки
     edge = graph_edge(mat)
 
-    print(mat)
     print(d)
     print(edge)
+    print(mat)

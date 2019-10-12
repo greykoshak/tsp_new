@@ -18,3 +18,6 @@ def func(x, y):
 
 res1 = func(3, 4)
 print("res = {}".format(res1))
+
+
+n = max(matrix, key=lambda x:x[1]) # Максимальное значение по второму элементу
