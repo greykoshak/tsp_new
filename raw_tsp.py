@@ -70,6 +70,36 @@ class SetMatrix:
         return self.mat
 
 
+class SearchRoot:
+    """ Методы поиска в алгоритме ветвей и границ """
+
+    def __init__(self, matrix):
+        self.mat = matrix
+        self.f0 = 0.
+
+    def f0_estimate(self):
+        # Первичная оценка нулевого варианта F0=mat(0,1)+mat(1,2)+mat(2,3)+mat(3,4)+mat(4,0)=10+10+20+15+10=65
+        for i in range(len(mat[0]) - 1):
+            self.f0 += self.mat[i][i + 1]
+        self.f0 += self.mat[len(mat[0]) - 1][0]  # f0 = 65
+
+    def count_d(self):
+        """ d - сумма di + dj (сумма минимальных элементов по строкам и столбцам) """
+        n = len(self.mat[0])  # Количество точек обхода
+
+        di = np.zeros((n, 1))  # Одномерный vector для выбора минимального значения по строке
+        dj = np.zeros((1, n))  # Одномерный vector для выбора минимального значения по столбцу
+
+        di = np.min(self.mat, axis=1)  # min элемент по строкам
+        di.shape = (n, 1)  # Преобразование вектора-строки в вектор-столбец
+        self.mat = self.mat - di  # Редукция строк
+
+        dj = np.min(self.mat, axis=0)  # min элемент по столбцам
+        self.mat = self.mat - dj  # Редукция столбцов
+
+        d = di.sum() + dj.sum()
+
+
 if __name__ == "__main__":
 
     def graph_edge(matrix):
@@ -83,8 +113,8 @@ if __name__ == "__main__":
 
         for coord in v_null:
             matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
-            di = mat[coord[0]:coord[0] + 1, ].min()     # min по строке
-            dj = mat[:, coord[1]].min()                 # min по столбцу
+            di = mat[coord[0]:coord[0] + 1, ].min()  # min по строке
+            dj = mat[:, coord[1]].min()  # min по столбцу
             max_value.append(di + dj)
             point.append(coord)
             matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
@@ -109,16 +139,12 @@ if __name__ == "__main__":
     f0 = 0.0  # Первичная оценка нулевого варианта
     for i in range(len(mat[0]) - 1):
         f0 += mat[i][i + 1]
-    f0 += mat[len(mat[0]) - 1][0]
+    f0 += mat[len(mat[0]) - 1][0]  # f0 = 65
 
     n = len(mat[0])  # Количество точек обхода
 
     di = np.zeros((n, 1))  # Одномерный vector для выбора минимального значения по строке
     dj = np.zeros((1, n))  # Одномерный vector для выбора минимального значения по столбцу
-
-    # for i in np.arange(0, n, 1):
-    #     di[i][0] = mat[i:i + 1, ].min()
-    #     dj[0][i] = mat[:, i].min()
 
     di = np.min(mat, axis=1)  # min элемент по строкам
     di.shape = (n, 1)  # Преобразование вектора-строки в вектор-столбец
