@@ -76,12 +76,18 @@ class SearchRoot:
     def __init__(self, matrix):
         self.mat = matrix
         self.f0 = 0.
+        self.f0_root = list()
+        self.d = 0.
+        self.f0_estimate()
+        self.count_d()
 
     def f0_estimate(self):
         # Первичная оценка нулевого варианта F0=mat(0,1)+mat(1,2)+mat(2,3)+mat(3,4)+mat(4,0)=10+10+20+15+10=65
         for i in range(len(mat[0]) - 1):
             self.f0 += self.mat[i][i + 1]
-        self.f0 += self.mat[len(mat[0]) - 1][0]  # f0 = 65
+            self.f0_root.append((i, i + 1))
+        self.f0 += self.mat[len(self.mat[0]) - 1][0]  # f0 = 65
+        self.f0_root.append((len(self.mat[0]) - 1, 0))
 
     def count_d(self):
         """ d - сумма di + dj (сумма минимальных элементов по строкам и столбцам) """
