@@ -27,13 +27,13 @@ class DefineMatrix:
                 distances[j][i] = distances[i][j]
         return distances
 
-    @staticmethod
-    def matrix_print(matrix):
-        # Красивый вывод матрицы
-        for i in range(len(matrix)):
-            for j in range(len(matrix[i])):
-                print("{:3.0f}".format(matrix[i][j]), sep=' ', end=' ')
-            print('', end='\n')
+        # @staticmethod
+        # def matrix_print(matrix):
+        #     # Красивый вывод матрицы
+        #     for i in range(len(matrix)):
+        #         for j in range(len(matrix[i])):
+        #             print("{:3.0f}".format(matrix[i][j]), sep=' ', end=' ')
+        #         print('', end='\n')
 
 
 class City:
@@ -70,16 +70,14 @@ class SetMatrix:
         return self.mat
 
 
-class SearchRoot:
+class InitialGraphScore:
     """ Методы поиска в алгоритме ветвей и границ """
 
     def __init__(self, matrix):
         self.mat = matrix
         self.f0 = 0.
         self.f0_root = list()
-        self.d = 0.
         self.f0_estimate()
-        self.count_d()
 
     def f0_estimate(self):
         # Первичная оценка нулевого варианта F0=mat(0,1)+mat(1,2)+mat(2,3)+mat(3,4)+mat(4,0)=10+10+20+15+10=65
@@ -89,46 +87,47 @@ class SearchRoot:
         self.f0 += self.mat[len(self.mat[0]) - 1][0]  # f0 = 65
         self.f0_root.append((len(self.mat[0]) - 1, 0))
 
-    def count_d(self):
-        """ d - сумма di + dj (сумма минимальных элементов по строкам и столбцам) """
-        n = len(self.mat[0])  # Количество точек обхода
 
-        di = np.zeros((n, 1))  # Одномерный vector для выбора минимального значения по строке
-        dj = np.zeros((1, n))  # Одномерный vector для выбора минимального значения по столбцу
+def count_d(matrix):
+    """ d - сумма di + dj (сумма минимальных элементов по строкам и столбцам) """
 
-        di = np.min(self.mat, axis=1)  # min элемент по строкам
-        di.shape = (n, 1)  # Преобразование вектора-строки в вектор-столбец
-        self.mat = self.mat - di  # Редукция строк
+    dim = matrix.shape[0]  # Количество точек обхода
 
-        dj = np.min(self.mat, axis=0)  # min элемент по столбцам
-        self.mat = self.mat - dj  # Редукция столбцов
+    di = np.zeros((dim, 1))  # Одномерный vector для выбора минимального значения по строке
+    dj = np.zeros((1, dim))  # Одномерный vector для выбора минимального значения по столбцу
 
-        d = di.sum() + dj.sum()
+    di = np.min(matrix, axis=1)  # min элемент по строкам
+    di.shape = (dim, 1)  # Преобразование вектора-строки в вектор-столбец
+    matrix = matrix - di  # Редукция строк
+
+    dj = np.min(matrix, axis=0)  # min элемент по столбцам
+    matrix = matrix - dj  # Редукция столбцов
+
+    return di.sum() + dj.sum(), matrix
+
+
+def graph_edge(matrix):
+    """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
+
+    find = np.where(matrix == 0)  # Найти все нулевые элементы
+    v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
+    max_value = list()  # Оценки нулевых точек
+    point = list()  # Координаты нулевых точек
+    inf = float('inf')
+
+    for coord in v_null:
+        matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
+        di = mat[coord[0]:coord[0] + 1, ].min()  # min по строке
+        dj = mat[:, coord[1]].min()  # min по столбцу
+        max_value.append(di + dj)
+        point.append(coord)
+        matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
+    idx = max_value.index(max(max_value))
+
+    return point[idx]
 
 
 if __name__ == "__main__":
-
-    def graph_edge(matrix):
-        """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
-
-        find = np.where(matrix == 0)  # Найти все нулевые элементы
-        v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
-        max_value = list()  # Оценки нулевых точек
-        point = list()  # Координаты нулевых точек
-        inf = float('inf')
-
-        for coord in v_null:
-            matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
-            di = mat[coord[0]:coord[0] + 1, ].min()  # min по строке
-            dj = mat[:, coord[1]].min()  # min по столбцу
-            max_value.append(di + dj)
-            point.append(coord)
-            matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
-        idx = max_value.index(max(max_value))
-
-        return point[idx]
-
-
     # mat = DefineMatrix(points).build_matrix()
     # DefineMatrix.matrix_print(mat)
 
@@ -139,32 +138,39 @@ if __name__ == "__main__":
     est_plans = list()  # Оценка планов
     root = list()  # Маршрут комивояжера
 
-    # Считаем первичную оценку нулевого варианта F0 = mat(0,1) + mat(1,2) + mat(2,3) +
-    # mat(3,4) + mat(4,0) = 10 + 10 +20 + 15 + 10 = 65
-
-    f0 = 0.0  # Первичная оценка нулевого варианта
-    for i in range(len(mat[0]) - 1):
-        f0 += mat[i][i + 1]
-    f0 += mat[len(mat[0]) - 1][0]  # f0 = 65
-
-    n = len(mat[0])  # Количество точек обхода
-
-    di = np.zeros((n, 1))  # Одномерный vector для выбора минимального значения по строке
-    dj = np.zeros((1, n))  # Одномерный vector для выбора минимального значения по столбцу
-
-    di = np.min(mat, axis=1)  # min элемент по строкам
-    di.shape = (n, 1)  # Преобразование вектора-строки в вектор-столбец
-    mat = mat - di  # Редукция строк
-
-    dj = np.min(mat, axis=0)  # min элемент по столбцам
-    mat = mat - dj  # Редукция столбцов
-
-    d = di.sum() + dj.sum()
-    est_plans.append(d)
+    # # Считаем первичную оценку нулевого варианта F0 = mat(0,1) + mat(1,2) + mat(2,3) +
+    # # mat(3,4) + mat(4,0) = 10 + 10 +20 + 15 + 10 = 65
+    #
+    # f0 = 0.0  # Первичная оценка нулевого варианта
+    # for i in range(len(mat[0]) - 1):
+    #     f0 += mat[i][i + 1]
+    #
+    # n = len(mat[0])  # Количество точек обхода
+    #
+    # di = np.zeros((n, 1))  # Одномерный vector для выбора минимального значения по строке
+    # dj = np.zeros((1, n))  # Одномерный vector для выбора минимального значения по столбцу
+    #
+    # di = np.min(mat, axis=1)  # min элемент по строкам
+    # di.shape = (n, 1)  # Преобразование вектора-строки в вектор-столбец
+    # mat = mat - di  # Редукция строк
+    #
+    # dj = np.min(mat, axis=0)  # min элемент по столбцам
+    # mat = mat - dj  # Редукция столбцов
+    #
+    # d = di.sum() + dj.sum()
+    # est_plans.append(d)
 
     # Оценка нулевых клеток, поиск ребра для оценки
-    edge = graph_edge(mat)
+    # edge = graph_edge(mat)
 
-    print(d)
-    print(edge)
-    print(mat)
+    igs = InitialGraphScore(mat)
+    first_pass = True
+
+    for i in np.arange(0, mat.shape[0], 1):
+        if first_pass:
+            d_tuple = count_d(mat)
+            d, mat = d_tuple[0], d_tuple[1]     # Оценка минимума минимумов =58 и новая матрица
+            edge = graph_edge(mat)  # Поиск ребра-кандидата графа
+            first_pass = False
+        else:
+            print(i)
