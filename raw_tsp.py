@@ -61,6 +61,7 @@ class SetMatrix:
                              [8., 9., -1., 20., 10.],
                              [14., 10., 24., -1., 15.],
                              [10., 8., 25., 27., -1.]])
+        self.index = [[j for j in range(1, len(self.mat) + 1)] for i in range(2)]  # Индексы строк и столбцов
         self.set_diagonal()
 
     def set_diagonal(self):
@@ -77,6 +78,7 @@ class InitialGraphScore:
         self.mat = matrix
         self.f0 = 0.
         self.f0_root = list()
+
         self.f0_estimate()
 
     def f0_estimate(self):
@@ -127,6 +129,26 @@ def graph_edge(matrix):
     return point[idx]
 
 
+def select_wrong_root(root: list, edge: tuple) -> list:
+    l_root = root[:]
+    wrong_root = [(edge[1], edge[0])]
+    l_root.append(edge)
+    l_root.sort()
+
+    print(l_root)
+
+    return wrong_root
+
+
+def set_value(matrix, edge, value):
+    """ Для заданной ячейки установить столбец и строку значение """
+
+    matrix[edge[0]:edge[0] + 1, ] = value
+    matrix[:, edge[1]] = value
+
+    return matrix
+
+
 if __name__ == "__main__":
     # mat = DefineMatrix(points).build_matrix()
     # DefineMatrix.matrix_print(mat)
@@ -134,9 +156,9 @@ if __name__ == "__main__":
     mat = SetMatrix().set_diagonal()
     # DefineMatrix.matrix_print(mat)
 
-    plans = list()  # Планы
-    est_plans = list()  # Оценка планов
-    root = list()  # Маршрут комивояжера
+    # plans = list()  # Планы
+    # est_plans = list()  # Оценка планов
+    # root = list()  # Маршрут комивояжера
 
     # # Считаем первичную оценку нулевого варианта F0 = mat(0,1) + mat(1,2) + mat(2,3) +
     # # mat(3,4) + mat(4,0) = 10 + 10 +20 + 15 + 10 = 65
@@ -163,14 +185,39 @@ if __name__ == "__main__":
     # Оценка нулевых клеток, поиск ребра для оценки
     # edge = graph_edge(mat)
 
+    plans = list()  # Планы
+    est_plans = list()  # Оценка планов
+    root = list()  # Маршрут комивояжера
+
     igs = InitialGraphScore(mat)
     first_pass = True
 
     for i in np.arange(0, mat.shape[0], 1):
         if first_pass:
             d_tuple = count_d(mat)
-            d, mat = d_tuple[0], d_tuple[1]     # Оценка минимума минимумов =58 и новая матрица
-            edge = graph_edge(mat)  # Поиск ребра-кандидата графа
+            d_min, mat = d_tuple[0], d_tuple[1]  # Оценка минимума минимумов =58 и новая матрица
+            est_plans.append(d_min)
+
+            if d_min == igs.f0:
+                root.append(igs.f0_root)
+                break
             first_pass = False
         else:
-            print(i)
+            edge = graph_edge(mat)  # Поиск ребра-кандидата графа
+            right = mat.copy()
+            right[edge] = float('inf')  # Исключаем ребро из маршрута
+            d_tuple_right = count_d(right)
+            d_right = est_plans[-1] + d_tuple_right[0]
+            # print("d_right: {}".format(d_right))
+
+            left = mat.copy()
+            left = set_value(left, edge, 0.)
+            inf_list = select_wrong_root(root, edge)
+
+            for coord in inf_list:
+                left[coord] = float('inf')
+
+            d_tuple_left = count_d(left)
+            d_left = est_plans[-1] + d_tuple_left[0]
+            # print("d_left: {}".format(d_left))
+# https://stackoverflow.com/questions/3877491/deleting-rows-in-numpy-array
