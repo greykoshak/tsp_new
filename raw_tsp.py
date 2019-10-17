@@ -2,8 +2,6 @@
 import numpy as np
 from numpy import sqrt
 
-# from numpy import sqrt
-
 points = [(800, 400), (500, 300), (900, 500), (900, 400), (700, 100), (500, 500), (900, 300), (100, 300)]
 
 
@@ -26,14 +24,6 @@ class DefineMatrix:
                 distances[i, j] = City.distance(cities[i], cities[j])
                 distances[j][i] = distances[i][j]
         return distances
-
-        # @staticmethod
-        # def matrix_print(matrix):
-        #     # Красивый вывод матрицы
-        #     for i in range(len(matrix)):
-        #         for j in range(len(matrix[i])):
-        #             print("{:3.0f}".format(matrix[i][j]), sep=' ', end=' ')
-        #         print('', end='\n')
 
 
 class City:
@@ -61,14 +51,20 @@ class SetMatrix:
                              [8., 9., -1., 20., 10.],
                              [14., 10., 24., -1., 15.],
                              [10., 8., 25., 27., -1.]])
-        self.index = [[j for j in range(1, len(self.mat) + 1)] for i in range(2)]  # Индексы строк и столбцов
+        self.index = [[j for j in range(len(self.mat))] for i in range(2)]  # Индексы строк и столбцов
         self.set_diagonal()
 
     def set_diagonal(self):
         """ Диагональные элементы исключаем """
-        for i in range(len(self.mat)):
-            self.mat[i][i] = float('inf')
+        for _i in range(len(self.mat)):
+            self.mat[_i][_i] = float('inf')
         return self.mat
+
+    def get_index(self):
+        return self.index
+
+    def set_index(self, update_list):
+        self.index = update_list
 
 
 class InitialGraphScore:
@@ -117,13 +113,13 @@ def graph_edge(matrix):
     point = list()  # Координаты нулевых точек
     inf = float('inf')
 
-    for coord in v_null:
-        matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
-        di = mat[coord[0]:coord[0] + 1, ].min()  # min по строке
-        dj = mat[:, coord[1]].min()  # min по столбцу
+    for coords in v_null:
+        matrix[coords[0], coords[1]], inf = inf, matrix[coords[0], coords[1]]
+        di = mat[coords[0]:coords[0] + 1, ].min()  # min по строке
+        dj = mat[:, coords[1]].min()  # min по столбцу
         max_value.append(di + dj)
-        point.append(coord)
-        matrix[coord[0], coord[1]], inf = inf, matrix[coord[0], coord[1]]
+        point.append(coords)
+        matrix[coords[0], coords[1]], inf = inf, matrix[coords[0], coords[1]]
     idx = max_value.index(max(max_value))
 
     return point[idx]
@@ -134,8 +130,6 @@ def select_wrong_root(root: list, edge: tuple) -> list:
     wrong_root = [(edge[1], edge[0])]
     l_root.append(edge)
     l_root.sort()
-
-    print(l_root)
 
     return wrong_root
 
@@ -153,37 +147,8 @@ if __name__ == "__main__":
     # mat = DefineMatrix(points).build_matrix()
     # DefineMatrix.matrix_print(mat)
 
-    mat = SetMatrix().set_diagonal()
-    # DefineMatrix.matrix_print(mat)
-
-    # plans = list()  # Планы
-    # est_plans = list()  # Оценка планов
-    # root = list()  # Маршрут комивояжера
-
-    # # Считаем первичную оценку нулевого варианта F0 = mat(0,1) + mat(1,2) + mat(2,3) +
-    # # mat(3,4) + mat(4,0) = 10 + 10 +20 + 15 + 10 = 65
-    #
-    # f0 = 0.0  # Первичная оценка нулевого варианта
-    # for i in range(len(mat[0]) - 1):
-    #     f0 += mat[i][i + 1]
-    #
-    # n = len(mat[0])  # Количество точек обхода
-    #
-    # di = np.zeros((n, 1))  # Одномерный vector для выбора минимального значения по строке
-    # dj = np.zeros((1, n))  # Одномерный vector для выбора минимального значения по столбцу
-    #
-    # di = np.min(mat, axis=1)  # min элемент по строкам
-    # di.shape = (n, 1)  # Преобразование вектора-строки в вектор-столбец
-    # mat = mat - di  # Редукция строк
-    #
-    # dj = np.min(mat, axis=0)  # min элемент по столбцам
-    # mat = mat - dj  # Редукция столбцов
-    #
-    # d = di.sum() + dj.sum()
-    # est_plans.append(d)
-
-    # Оценка нулевых клеток, поиск ребра для оценки
-    # edge = graph_edge(mat)
+    sm = SetMatrix()
+    mat = sm.set_diagonal()
 
     plans = list()  # Планы
     est_plans = list()  # Оценка планов
@@ -204,6 +169,8 @@ if __name__ == "__main__":
             first_pass = False
         else:
             edge = graph_edge(mat)  # Поиск ребра-кандидата графа
+            print("edge = {}".format(edge))
+
             right = mat.copy()
             right[edge] = float('inf')  # Исключаем ребро из маршрута
             d_tuple_right = count_d(right)
@@ -211,13 +178,29 @@ if __name__ == "__main__":
             # print("d_right: {}".format(d_right))
 
             left = mat.copy()
+            ind = sm.get_index()
             left = set_value(left, edge, 0.)
             inf_list = select_wrong_root(root, edge)
 
             for coord in inf_list:
-                left[coord] = float('inf')
+                left[ind[0][coord[0]], ind[1][coord[1]]] = float('inf')
 
             d_tuple_left = count_d(left)
             d_left = est_plans[-1] + d_tuple_left[0]
-            # print("d_left: {}".format(d_left))
-# https://stackoverflow.com/questions/3877491/deleting-rows-in-numpy-array
+
+            print("d_left: {} d_right: {}".format(d_left, d_right))
+
+            if d_right < d_left:
+                mat = right
+                est_plans.append(d_right)
+                plans.append((-edge[0], -edge[1]))
+            else:
+                plans.append(edge)
+                est_plans.append(d_left)
+
+                left = np.delete(left, (ind[0][edge[0]]), axis=0)
+                mat = np.delete(left, (ind[1][edge[1]]), axis=1)
+
+                del ind[0][edge[0]]
+                del ind[1][edge[1]]
+                sm.set_index(ind)
