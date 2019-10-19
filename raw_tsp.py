@@ -66,6 +66,10 @@ class SetMatrix:
     def set_index(self, update_list):
         self.index = update_list
 
+    def mod_index(self, edge: tuple) -> tuple:
+        func = lambda x: (self.index[0].index(x[0]), self.index[1].index(x[1]))
+        return func(edge)
+
 
 class InitialGraphScore:
     """ Методы поиска в алгоритме ветвей и границ """
@@ -104,7 +108,7 @@ def count_d(matrix):
     return di.sum() + dj.sum(), matrix
 
 
-def graph_edge(matrix):
+def graph_edge(matrix, ind):
     """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
 
     find = np.where(matrix == 0)  # Найти все нулевые элементы
@@ -118,17 +122,18 @@ def graph_edge(matrix):
         di = mat[coords[0]:coords[0] + 1, ].min()  # min по строке
         dj = mat[:, coords[1]].min()  # min по столбцу
         max_value.append(di + dj)
-        point.append(coords)
+        point.append((ind[0][coords[0]], ind[1][coords[1]]))
         matrix[coords[0], coords[1]], inf = inf, matrix[coords[0], coords[1]]
     idx = max_value.index(max(max_value))
 
     return point[idx]
 
 
-def select_wrong_root(root: list, edge: tuple) -> list:
+def select_wrong_root(root: list, edge: tuple, sm) -> list:
     l_root = root[:]
-    wrong_root = [(edge[1], edge[0])]
-    l_root.append(edge)
+    real_edge = sm.mod_index(edge)
+    wrong_root = [(real_edge[1], real_edge[0])]
+    l_root.append(real_edge)
     l_root.sort()
 
     return wrong_root
@@ -149,6 +154,7 @@ if __name__ == "__main__":
 
     sm = SetMatrix()
     mat = sm.set_diagonal()
+    ind = sm.get_index()
 
     plans = list()  # Планы
     est_plans = list()  # Оценка планов
@@ -168,35 +174,37 @@ if __name__ == "__main__":
                 break
             first_pass = False
         else:
-            edge = graph_edge(mat)  # Поиск ребра-кандидата графа
+            print(mat)
+            edge = graph_edge(mat, ind)  # Поиск ребра-кандидата графа
             print("edge = {}".format(edge))
 
             right = mat.copy()
-            right[edge] = float('inf')  # Исключаем ребро из маршрута
+            ii = sm.mod_index(edge)
+            right[ii] = float('inf')  # Исключаем ребро из маршрута
             d_tuple_right = count_d(right)
             d_right = est_plans[-1] + d_tuple_right[0]
-            # print("d_right: {}".format(d_right))
 
             left = mat.copy()
-            ind = sm.get_index()
             left = set_value(left, edge, 0.)
-            inf_list = select_wrong_root(root, edge)
+            inf_list = select_wrong_root(root, edge, sm)
 
             for coord in inf_list:
-                left[ind[0][coord[0]], ind[1][coord[1]]] = float('inf')
+                left[coord] = float('inf')
 
             d_tuple_left = count_d(left)
             d_left = est_plans[-1] + d_tuple_left[0]
 
-            print("d_left: {} d_right: {}".format(d_left, d_right))
+            print("d_left: {} d_right: {} root {}".format(d_left, d_right, root))
 
             if d_right < d_left:
                 mat = right
                 est_plans.append(d_right)
-                plans.append((-edge[0], -edge[1]))
+                root.append((-ii[0], -ii[1]))
+                plans.append((-ii[0], -ii[1]))
             else:
                 plans.append(edge)
                 est_plans.append(d_left)
+                root.append((ii[0], ii[1]))
 
                 left = np.delete(left, (ind[0][edge[0]]), axis=0)
                 mat = np.delete(left, (ind[1][edge[1]]), axis=1)

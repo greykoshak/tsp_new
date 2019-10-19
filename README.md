@@ -21,3 +21,20 @@ print("res = {}".format(res1))
 
 
 n = max(matrix, key=lambda x:x[1]) # Максимальное значение по второму элементу
+
+# https://python-scripts.com/logging-python
+
+    logger = logging.getLogger(__name__)
+
+    logger.setLevel(logging.INFO)
+
+    # create the logging file handler
+    fh = logging.FileHandler("raw_tsp.log")
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+
+    # add handler to logger object
+    logger.addHandler(fh)
+
+    logger.info("Program started")
+
