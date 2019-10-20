@@ -130,13 +130,24 @@ def graph_edge(matrix, ind):
 
 
 def select_wrong_root(root: list, edge: tuple) -> list:
-    l_root = root[:]
+    l_root = root[:]  # [(1, 2)]
 
-    l_root.append(edge)
-    l_root.sort()
+    # Строим максимальную цепочку от нового кандидата edge
+    path = [edge]  # [(3, 1)]
+    l, r = edge[0], edge[1]
+
+    for xy in root:
+        if r == xy[0]:
+            path.append(xy)
+            r = xy[1]
+        elif l == xy[1]:
+            path.insert(0, xy)
+            l = xy[0]
+    print("++++++++++++ PATH: ", path)
 
     print("root: l_root: ", l_root, "edge: ", edge)
     wrong_root = [(edge[1], edge[0])]
+    wrong_root.append((r, l))
     print("--- wrong roots: {} ---".format(wrong_root))
 
     return wrong_root
@@ -167,7 +178,6 @@ if __name__ == "__main__":
     first_pass = True
 
     for i in np.arange(0, mat.shape[0], 1):
-        print("\n============ i = {} ================\n".format(i))
         if first_pass:
             d_tuple = count_d(mat)
             d_min, mat = d_tuple[0], d_tuple[1]  # Оценка минимума минимумов =58 и новая матрица
@@ -178,6 +188,7 @@ if __name__ == "__main__":
                 break
             first_pass = False
         else:
+            print("\n============ i = {} ================\n".format(i))
             print("index: {}: ".format(sm.get_index()))
             print(mat)
             edge = graph_edge(mat, ind)  # Поиск ребра-кандидата графа (реальные узлы)
@@ -186,37 +197,52 @@ if __name__ == "__main__":
             # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
             right = mat.copy()
             ii = sm.mod_index(edge)
-            print("ii = {}".format(ii))
+            # print("ii = {}".format(ii))
             right[ii] = float('inf')  # Исключаем ребро из маршрута
+            print("right: \n", right)
+
             d_tuple_right = count_d(right)
             d_right = est_plans[-1] + d_tuple_right[0]
+            right = d_tuple_right[1]
+            # print("d_right: ", d_tuple_right[0])
 
             # Вариант "влево" - считаем, что ребро edge входит в маршрут
             left = mat.copy()
-            left = set_value(left, edge, 0.)
+            left = np.delete(left, (ii[0]), axis=0)
+            left = np.delete(left, (ii[1]), axis=1)
+            del ind[0][ii[0]]
+            del ind[1][ii[1]]
+            sm.set_index(ind)
+
             inf_list = select_wrong_root(root, edge)  # Исключаем ребра, образующие цикл с уже существующим root
 
+            print("inf_list:", inf_list)
+            ind = sm.get_index()
+            f = lambda x, ind_list: x in ind_list # Проверка точки(x,y) на принадлежность текущей матрице
+
             for coord in inf_list:
-                left[coord] = float('inf')
+                if f(coord[0], ind[0]) and f(coord[1], ind[1]):
+                    kk = sm.mod_index(coord)
+                    left[kk] = float('inf')
+                    print("inf: coord: ", coord, " kk: ", kk)
+            print("left: -----------------------\n", left)
 
             d_tuple_left = count_d(left)
             d_left = est_plans[-1] + d_tuple_left[0]
+            left = d_tuple_left[1]
 
             print("d_left: {} d_right: {} root {}".format(d_left, d_right, root))
 
             if d_right < d_left:
+                print("Направо!")
                 mat = right
                 est_plans.append(d_right)
                 root.append((-ii[0], -ii[1]))
                 plans.append((-ii[0], -ii[1]))
             else:
+                print("Налево!")
+                mat = left
                 plans.append(edge)
                 est_plans.append(d_left)
                 root.append((ii[0], ii[1]))
 
-                left = np.delete(left, (ind[0][edge[0]]), axis=0)
-                mat = np.delete(left, (ind[1][edge[1]]), axis=1)
-
-                del ind[0][edge[0]]
-                del ind[1][edge[1]]
-                sm.set_index(ind)
