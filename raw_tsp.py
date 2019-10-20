@@ -126,15 +126,18 @@ def graph_edge(matrix, ind):
         matrix[coords[0], coords[1]], inf = inf, matrix[coords[0], coords[1]]
     idx = max_value.index(max(max_value))
 
-    return point[idx]
+    return point[idx]  # Ребро с реальными узлами
 
 
-def select_wrong_root(root: list, edge: tuple, sm) -> list:
+def select_wrong_root(root: list, edge: tuple) -> list:
     l_root = root[:]
-    real_edge = sm.mod_index(edge)
-    wrong_root = [(real_edge[1], real_edge[0])]
-    l_root.append(real_edge)
+
+    l_root.append(edge)
     l_root.sort()
+
+    print("root: l_root: ", l_root, "edge: ", edge)
+    wrong_root = [(edge[1], edge[0])]
+    print("--- wrong roots: {} ---".format(wrong_root))
 
     return wrong_root
 
@@ -164,6 +167,7 @@ if __name__ == "__main__":
     first_pass = True
 
     for i in np.arange(0, mat.shape[0], 1):
+        print("\n============ i = {} ================\n".format(i))
         if first_pass:
             d_tuple = count_d(mat)
             d_min, mat = d_tuple[0], d_tuple[1]  # Оценка минимума минимумов =58 и новая матрица
@@ -174,19 +178,23 @@ if __name__ == "__main__":
                 break
             first_pass = False
         else:
+            print("index: {}: ".format(sm.get_index()))
             print(mat)
-            edge = graph_edge(mat, ind)  # Поиск ребра-кандидата графа
+            edge = graph_edge(mat, ind)  # Поиск ребра-кандидата графа (реальные узлы)
             print("edge = {}".format(edge))
 
+            # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
             right = mat.copy()
             ii = sm.mod_index(edge)
+            print("ii = {}".format(ii))
             right[ii] = float('inf')  # Исключаем ребро из маршрута
             d_tuple_right = count_d(right)
             d_right = est_plans[-1] + d_tuple_right[0]
 
+            # Вариант "влево" - считаем, что ребро edge входит в маршрут
             left = mat.copy()
             left = set_value(left, edge, 0.)
-            inf_list = select_wrong_root(root, edge, sm)
+            inf_list = select_wrong_root(root, edge)  # Исключаем ребра, образующие цикл с уже существующим root
 
             for coord in inf_list:
                 left[coord] = float('inf')
