@@ -1,4 +1,6 @@
 # Travelling salesman problem
+import copy
+
 import numpy as np
 from numpy import sqrt
 
@@ -66,17 +68,21 @@ class SetMatrix:
     def set_index(self, update_list):
         self.index = update_list
 
-    def mod_index(self, edge: tuple) -> tuple:
-        func = lambda x: (self.index[0].index(x[0]), self.index[1].index(x[1]))
+    def mod_index(self, edge: tuple, my_index=None) -> tuple:
+        if my_index is None:
+            func = lambda x: (self.index[0].index(x[0]), self.index[1].index(x[1]))
+        else:
+            func = lambda x: (my_index[0].index(x[0]), my_index[1].index(x[1]))
         return func(edge)
 
 
-class InitialGraphScore:
+class GraphScore:
     """ Методы поиска в алгоритме ветвей и границ """
 
     def __init__(self, matrix):
         self.mat = matrix
         self.f0 = 0.
+        self.final = 0.
         self.f0_root = list()
 
         self.f0_estimate()
@@ -88,6 +94,14 @@ class InitialGraphScore:
             self.f0_root.append((i, i + 1))
         self.f0 += self.mat[len(self.mat[0]) - 1][0]  # f0 = 65
         self.f0_root.append((len(self.mat[0]) - 1, 0))
+
+    def get_estimation(self):
+        return self.root, self.f0
+
+    def get_root_estimation(self, my_root):
+        for pnt in my_root:
+            self.final += self.mat[pnt[0]][pnt[1]]
+        return self.final
 
 
 def count_d(matrix):
@@ -130,36 +144,26 @@ def graph_edge(matrix, ind):
 
 
 def select_wrong_root(root: list, edge: tuple) -> list:
-    l_root = root[:]  # [(1, 2)]
-
     # Строим максимальную цепочку от нового кандидата edge
     path = [edge]  # [(3, 1)]
     l, r = edge[0], edge[1]
 
-    for xy in root:
-        if r == xy[0]:
-            path.append(xy)
-            r = xy[1]
-        elif l == xy[1]:
-            path.insert(0, xy)
-            l = xy[0]
-    print("++++++++++++ PATH: ", path)
-
-    print("root: l_root: ", l_root, "edge: ", edge)
+    for i in range(len(root)):
+        for xy in root:
+            if r == xy[0]:
+                path.append(xy)
+                r = xy[1]
+            elif l == xy[1]:
+                path.insert(0, xy)
+                l = xy[0]
+    # print("++++++++++++ PATH: ", path)
+    #
+    # print("root: l_root: ", l_root, "edge: ", edge)
     wrong_root = [(edge[1], edge[0])]
     wrong_root.append((r, l))
-    print("--- wrong roots: {} ---".format(wrong_root))
+    # print("--- wrong roots: {} ---".format(wrong_root))
 
     return wrong_root
-
-
-def set_value(matrix, edge, value):
-    """ Для заданной ячейки установить столбец и строку значение """
-
-    matrix[edge[0]:edge[0] + 1, ] = value
-    matrix[:, edge[1]] = value
-
-    return matrix
 
 
 if __name__ == "__main__":
@@ -168,13 +172,13 @@ if __name__ == "__main__":
 
     sm = SetMatrix()
     mat = sm.set_diagonal()
-    ind = sm.get_index()
 
     plans = list()  # Планы
     est_plans = list()  # Оценка планов
     root = list()  # Маршрут комивояжера
 
-    igs = InitialGraphScore(mat)
+    igs = GraphScore(mat)
+    print(igs.f0_root, igs.f0)
     first_pass = True
 
     for i in np.arange(0, mat.shape[0], 1):
@@ -188,18 +192,18 @@ if __name__ == "__main__":
                 break
             first_pass = False
         else:
-            print("\n============ i = {} ================\n".format(i))
-            print("index: {}: ".format(sm.get_index()))
-            print(mat)
+            ind = sm.get_index()
+            # print("i={} index: {}: ".format(i, ind))
+            # print(mat)
             edge = graph_edge(mat, ind)  # Поиск ребра-кандидата графа (реальные узлы)
-            print("edge = {}".format(edge))
+            # print("edge = {}".format(edge))
 
             # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
             right = mat.copy()
             ii = sm.mod_index(edge)
             # print("ii = {}".format(ii))
             right[ii] = float('inf')  # Исключаем ребро из маршрута
-            print("right: \n", right)
+            # print("right: \n", right)
 
             d_tuple_right = count_d(right)
             d_right = est_plans[-1] + d_tuple_right[0]
@@ -208,41 +212,55 @@ if __name__ == "__main__":
 
             # Вариант "влево" - считаем, что ребро edge входит в маршрут
             left = mat.copy()
+
+            # left_ind = ind.copy()  # Не работает:
+            # If the list contains objects and you want to copy them as well, use generic copy.deepcopy()
+            left_ind = copy.deepcopy(ind)
             left = np.delete(left, (ii[0]), axis=0)
             left = np.delete(left, (ii[1]), axis=1)
-            del ind[0][ii[0]]
-            del ind[1][ii[1]]
-            sm.set_index(ind)
+            del left_ind[0][ii[0]]
+            del left_ind[1][ii[1]]
 
             inf_list = select_wrong_root(root, edge)  # Исключаем ребра, образующие цикл с уже существующим root
 
-            print("inf_list:", inf_list)
-            ind = sm.get_index()
-            f = lambda x, ind_list: x in ind_list # Проверка точки(x,y) на принадлежность текущей матрице
+            # print("inf_list:", inf_list)
+            f = lambda x, ind_list: x in ind_list  # Проверка точки(x,y) на принадлежность текущей матрице
 
             for coord in inf_list:
-                if f(coord[0], ind[0]) and f(coord[1], ind[1]):
-                    kk = sm.mod_index(coord)
+                if f(coord[0], left_ind[0]) and f(coord[1], left_ind[1]):
+                    kk = sm.mod_index(coord, left_ind)
                     left[kk] = float('inf')
-                    print("inf: coord: ", coord, " kk: ", kk)
-            print("left: -----------------------\n", left)
+                    # print("inf: coord: ", coord, " kk: ", kk)
+            # print("left: -----------------------\n", left)
 
             d_tuple_left = count_d(left)
             d_left = est_plans[-1] + d_tuple_left[0]
             left = d_tuple_left[1]
 
-            print("d_left: {} d_right: {} root {}".format(d_left, d_right, root))
+            print("d_left: {} d_right: {}".format(d_left, d_right))
 
             if d_right < d_left:
                 print("Направо!")
                 mat = right
                 est_plans.append(d_right)
-                root.append((-ii[0], -ii[1]))
-                plans.append((-ii[0], -ii[1]))
+                plans.append((-edge[0], -edge[1]))
             else:
                 print("Налево!")
                 mat = left
+                sm.set_index(left_ind)
                 plans.append(edge)
                 est_plans.append(d_left)
-                root.append((ii[0], ii[1]))
+                root.append(edge)
+                # print(root, "!!!!!!!!!!!!!!!!!")
+
+    find = np.where(mat == 0)  # Найти все нулевые элементы
+    v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
+
+    ind = sm.get_index()
+
+    for point in v_null:
+        root.append((ind[0][point[0]], ind[1][point[1]]))
+
+    final = igs.get_root_estimation(root)
+    print(root, final)
 
