@@ -103,7 +103,7 @@ class GraphScore:
 
     def get_root_estimation(self, my_root):
         """ Оценка заданного варианта """
-        
+
         for pnt in my_root:
             self.final += self.mat[pnt[0]][pnt[1]]
         return self.final
