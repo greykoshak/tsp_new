@@ -58,8 +58,8 @@ class SetMatrix:
 
     def set_diagonal(self):
         """ Диагональные элементы исключаем """
-        for _i in range(len(self.mat)):
-            self.mat[_i][_i] = float('inf')
+        diag = np.diag_indices(len(self.mat[0]))
+        self.mat[diag] = float('inf')
         return self.mat
 
     def get_index(self):
@@ -263,17 +263,5 @@ if __name__ == "__main__":
 
     final = igs.get_root_estimation(root)
     print(root, final)
-
-    Z = np.zeros(10, [('position', [('x', float, 1),
-                                    ('y', float, 1)]),
-                      ('color', [('r', float, 1),
-                                 ('g', float, 1),
-                                 ('b', float, 1)])])
-    print(Z)
-
-    # https: // pythonworld.ru / numpy / 100 - exercises.html
-
-    Z = np.diag(np.arange(1, 5), k=0)
-    print(Z)
 
 
