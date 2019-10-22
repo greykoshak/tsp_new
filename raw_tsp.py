@@ -53,13 +53,15 @@ class SetMatrix:
                              [8., 9., -1., 20., 10.],
                              [14., 10., 24., -1., 15.],
                              [10., 8., 25., 27., -1.]])
-        self.index = [[j for j in range(len(self.mat))] for i in range(2)]  # Индексы строк и столбцов
+        self.index = [[j for j in range(self.mat.shape[0])] for _ in range(2)]  # Индексы строк и столбцов
         self.set_diagonal()
 
     def set_diagonal(self):
         """ Диагональные элементы исключаем """
-        diag = np.diag_indices(len(self.mat[0]))
+        diag = np.diag_indices(self.mat.shape[0])
         self.mat[diag] = float('inf')
+
+    def get_matrix(self):
         return self.mat
 
     def get_index(self):
@@ -68,12 +70,12 @@ class SetMatrix:
     def set_index(self, update_list):
         self.index = update_list
 
-    def mod_index(self, edge: tuple, my_index=None) -> tuple:
+    def mod_index(self, new_edge: tuple, my_index=None) -> tuple:
         if my_index is None:
             func = lambda x: (self.index[0].index(x[0]), self.index[1].index(x[1]))
         else:
             func = lambda x: (my_index[0].index(x[0]), my_index[1].index(x[1]))
-        return func(edge)
+        return func(new_edge)
 
 
 class GraphScore:
@@ -89,14 +91,14 @@ class GraphScore:
 
     def f0_estimate(self):
         # Первичная оценка нулевого варианта F0=mat(0,1)+mat(1,2)+mat(2,3)+mat(3,4)+mat(4,0)=10+10+20+15+10=65
-        for i in range(len(mat[0]) - 1):
-            self.f0 += self.mat[i][i + 1]
-            self.f0_root.append((i, i + 1))
-        self.f0 += self.mat[len(self.mat[0]) - 1][0]  # f0 = 65
-        self.f0_root.append((len(self.mat[0]) - 1, 0))
+        for _i in range(self.mat.shape[0] - 1):
+            self.f0 += self.mat[_i][_i + 1]
+            self.f0_root.append((_i, _i + 1))
+        self.f0 += self.mat[self.mat.shape[0] - 1][0]  # f0 = 65
+        self.f0_root.append((self.mat.shape[0] - 1, 0))
 
     def get_estimation(self):
-        return self.root, self.f0
+        return self.f0_root, self.f0
 
     def get_root_estimation(self, my_root):
         for pnt in my_root:
@@ -108,7 +110,6 @@ def count_d(matrix):
     """ d - сумма di + dj (сумма минимальных элементов по строкам и столбцам) """
 
     dim = matrix.shape[0]  # Количество точек обхода
-
     di = np.zeros((dim, 1))  # Одномерный vector для выбора минимального значения по строке
     dj = np.zeros((1, dim))  # Одномерный vector для выбора минимального значения по столбцу
 
@@ -118,51 +119,43 @@ def count_d(matrix):
 
     dj = np.min(matrix, axis=0)  # min элемент по столбцам
     matrix = matrix - dj  # Редукция столбцов
-
     return di.sum() + dj.sum(), matrix
 
 
-def graph_edge(matrix, ind):
+def graph_edge(p_matrix, p_ind):
     """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
 
-    find = np.where(matrix == 0)  # Найти все нулевые элементы
-    v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
+    _find = np.where(p_matrix == 0)  # Найти все нулевые элементы
+    _v_null = zip(_find[0], _find[1])  # Вектор, содержащий координаты нулевых элементов
     max_value = list()  # Оценки нулевых точек
-    point = list()  # Координаты нулевых точек
+    pnt = list()  # Координаты нулевых точек
     inf = float('inf')
 
-    for coords in v_null:
-        matrix[coords[0], coords[1]], inf = inf, matrix[coords[0], coords[1]]
-        di = mat[coords[0]:coords[0] + 1, ].min()  # min по строке
-        dj = mat[:, coords[1]].min()  # min по столбцу
+    for k in _v_null:
+        p_matrix[k[0], k[1]], inf = inf, p_matrix[k[0], k[1]]
+        di = mat[k[0]:k[0] + 1, ].min()  # min по строке
+        dj = mat[:, k[1]].min()  # min по столбцу
         max_value.append(di + dj)
-        point.append((ind[0][coords[0]], ind[1][coords[1]]))
-        matrix[coords[0], coords[1]], inf = inf, matrix[coords[0], coords[1]]
+        pnt.append((p_ind[0][k[0]], p_ind[1][k[1]]))
+        p_matrix[k[0], k[1]], inf = inf, p_matrix[k[0], k[1]]
     idx = max_value.index(max(max_value))
+    return pnt[idx]  # Ребро с реальными узлами
 
-    return point[idx]  # Ребро с реальными узлами
 
-
-def select_wrong_root(root: list, edge: tuple) -> list:
+def select_wrong_root(my_root: list, new_edge: tuple) -> list:
     # Строим максимальную цепочку от нового кандидата edge
-    path = [edge]  # [(3, 1)]
-    l, r = edge[0], edge[1]
+    path = [new_edge]  # [(3, 1)]
+    left_hand, right_hand = new_edge[0], new_edge[1]
 
-    for i in range(len(root)):
-        for xy in root:
-            if r == xy[0]:
+    for _ in range(len(my_root)):
+        for xy in my_root:
+            if right_hand == xy[0]:
                 path.append(xy)
-                r = xy[1]
-            elif l == xy[1]:
+                right_hand = xy[1]
+            elif left_hand == xy[1]:
                 path.insert(0, xy)
-                l = xy[0]
-    # print("++++++++++++ PATH: ", path)
-    #
-    # print("root: l_root: ", l_root, "edge: ", edge)
-    wrong_root = [(edge[1], edge[0])]
-    wrong_root.append((r, l))
-    # print("--- wrong roots: {} ---".format(wrong_root))
-
+                left_hand = xy[0]
+    wrong_root = [(new_edge[1], new_edge[0]), (right_hand, left_hand)]
     return wrong_root
 
 
@@ -171,7 +164,7 @@ if __name__ == "__main__":
     # DefineMatrix.matrix_print(mat)
 
     sm = SetMatrix()
-    mat = sm.set_diagonal()
+    mat = sm.get_matrix()
 
     plans = list()  # Планы
     est_plans = list()  # Оценка планов
@@ -180,8 +173,9 @@ if __name__ == "__main__":
     igs = GraphScore(mat)
     print(igs.f0_root, igs.f0)
     first_pass = True
+    build_root = True  # Условие работы цикла: пока есть ненулевые элементы
 
-    for i in np.arange(0, mat.shape[0], 1):
+    while build_root:
         if first_pass:
             d_tuple = count_d(mat)
             d_min, mat = d_tuple[0], d_tuple[1]  # Оценка минимума минимумов =58 и новая матрица
@@ -193,17 +187,12 @@ if __name__ == "__main__":
             first_pass = False
         else:
             ind = sm.get_index()
-            # print("i={} index: {}: ".format(i, ind))
-            # print(mat)
             edge = graph_edge(mat, ind)  # Поиск ребра-кандидата графа (реальные узлы)
-            # print("edge = {}".format(edge))
 
             # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
             right = mat.copy()
             ii = sm.mod_index(edge)
-            # print("ii = {}".format(ii))
             right[ii] = float('inf')  # Исключаем ребро из маршрута
-            # print("right: \n", right)
 
             d_tuple_right = count_d(right)
             d_right = est_plans[-1] + d_tuple_right[0]
@@ -223,15 +212,12 @@ if __name__ == "__main__":
 
             inf_list = select_wrong_root(root, edge)  # Исключаем ребра, образующие цикл с уже существующим root
 
-            # print("inf_list:", inf_list)
             f = lambda x, ind_list: x in ind_list  # Проверка точки(x,y) на принадлежность текущей матрице
 
-            for coord in inf_list:
-                if f(coord[0], left_ind[0]) and f(coord[1], left_ind[1]):
-                    kk = sm.mod_index(coord, left_ind)
+            for p in inf_list:
+                if f(p[0], left_ind[0]) and f(p[1], left_ind[1]):
+                    kk = sm.mod_index(p, left_ind)
                     left[kk] = float('inf')
-                    # print("inf: coord: ", coord, " kk: ", kk)
-            # print("left: -----------------------\n", left)
 
             d_tuple_left = count_d(left)
             d_left = est_plans[-1] + d_tuple_left[0]
@@ -251,7 +237,10 @@ if __name__ == "__main__":
                 plans.append(edge)
                 est_plans.append(d_left)
                 root.append(edge)
-                # print(root, "!!!!!!!!!!!!!!!!!")
+
+                bool_mat = left.copy().reshape(-1)
+                numbers = list(filter(lambda x: x != 0 and x != float('inf'), bool_mat))
+                build_root = True if numbers else False
 
     find = np.where(mat == 0)  # Найти все нулевые элементы
     v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
@@ -263,5 +252,3 @@ if __name__ == "__main__":
 
     final = igs.get_root_estimation(root)
     print(root, final)
-
-
