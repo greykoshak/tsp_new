@@ -90,7 +90,8 @@ class GraphScore:
         self.f0_estimate()
 
     def f0_estimate(self):
-        # Первичная оценка нулевого варианта F0=mat(0,1)+mat(1,2)+mat(2,3)+mat(3,4)+mat(4,0)=10+10+20+15+10=65
+        """ Первичная оценка нулевого варианта F0=mat(0,1)+mat(1,2)+mat(2,3)+mat(3,4)+mat(4,0)=10+10+20+15+10=65 """
+
         for _i in range(self.mat.shape[0] - 1):
             self.f0 += self.mat[_i][_i + 1]
             self.f0_root.append((_i, _i + 1))
@@ -101,6 +102,8 @@ class GraphScore:
         return self.f0_root, self.f0
 
     def get_root_estimation(self, my_root):
+        """ Оценка заданного варианта """
+        
         for pnt in my_root:
             self.final += self.mat[pnt[0]][pnt[1]]
         return self.final
