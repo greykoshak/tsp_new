@@ -289,7 +289,7 @@ if __name__ == "__main__":
     plt.plot(X1, Y1, color='r', linestyle=' ', marker='o')
     plt.plot(X1, Y1, color='b', linewidth=1)
 
-    plt.plot(X2[1], Y2[1], color='y', linestyle=' ', marker='o')
+    plt.plot(X2[1], Y2[1], color='m', linestyle=' ', marker='o')
     plt.plot(X2, Y2, color='g', linewidth=2, linestyle='-', label='Путь от  последнего \n к первому городу')
     plt.legend(loc='best')
 

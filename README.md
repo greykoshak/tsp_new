@@ -50,3 +50,9 @@ https://pythonworld.ru/novosti-mira-python/scientific-graphics-in-python.html
 
     plt.quiver(x_pos, y_pos, x_direct, y_direct, scale=3)
     plt.show()
+
+https://thispointer.com/pandas-dataframe-get-minimum-values-in-rows-or-columns-their-index-position/
+https://askvoprosy.com/voprosy/pandas-subtract-row-mean-from-each-element-in-row
+https://khashtamov.com/ru/pandas-introduction/
+
+
