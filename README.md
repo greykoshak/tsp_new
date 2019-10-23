@@ -40,4 +40,13 @@ n = max(matrix, key=lambda x:x[1]) # Максимальное значение �
 
 https://www.python-course.eu/python3_lambda.php
 https://ru.stackoverflow.com/questions/1037560/%d0%a1%d0%be%d1%80%d1%82%d0%b8%d1%80%d0%be%d0%b2%d0%ba%d0%b0-%d1%81%d0%bf%d0%b8%d1%81%d0%ba%d0%b0-%d0%ba%d0%be%d1%80%d1%82%d0%b5%d0%b6%d0%b5%d0%b9
+https://pythonworld.ru/novosti-mira-python/scientific-graphics-in-python.html
 
+    # Arrows
+    x_pos = [0, 1, 0.2]
+    y_pos = [0, 1, 0.8]
+    x_direct = [1, 0, 0.7]
+    y_direct = [1, -1, -0.7]
+
+    plt.quiver(x_pos, y_pos, x_direct, y_direct, scale=3)
+    plt.show()

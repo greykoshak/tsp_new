@@ -173,16 +173,12 @@ def select_wrong_root(my_root: list, new_edge: tuple) -> list:
 def sort_root(my_root: list) -> list:
     """ Создать цепочку последовательных звеньев """
 
-    my_root.sort()
-    path = [my_root[0]]
-    right_hand = my_root[0][1]
-
-    for _ in range(1, len(my_root)):
-        for xy in my_root:
-            if right_hand == xy[0]:
-                path.append(xy)
-                right_hand = xy[1]
-                break
+    path = [min(my_root)]
+    for _ in range(len(my_root) - 1):
+        next_item = path[-1]
+        path.append(
+            next(filter(lambda x: next_item[1] == x[0], my_root))
+        )
     return path
 
 
@@ -286,11 +282,6 @@ if __name__ == "__main__":
     X1 = [X[root[i][0]] for i in np.arange(0, len(root), 1)]
     Y1 = [Y[root[i][0]] for i in np.arange(0, len(root), 1)]
 
-    print(points)
-    print(root)
-    print(X1)
-    print(Y1)
-
     X2 = [X[root[len(root) - 1][0]], X[root[0][0]]]
     Y2 = [Y[root[len(root) - 1][0]], Y[root[0][0]]]
 
@@ -298,9 +289,11 @@ if __name__ == "__main__":
     plt.plot(X1, Y1, color='r', linestyle=' ', marker='o')
     plt.plot(X1, Y1, color='b', linewidth=1)
 
-    plt.plot(X2[1], Y2[1], color='g', linestyle=' ', marker='o')
+    plt.plot(X2[1], Y2[1], color='y', linestyle=' ', marker='o')
     plt.plot(X2, Y2, color='g', linewidth=2, linestyle='-', label='Путь от  последнего \n к первому городу')
     plt.legend(loc='best')
 
     plt.grid(True)
     plt.show()
+
+
