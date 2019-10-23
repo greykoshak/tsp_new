@@ -1,6 +1,7 @@
 # Travelling salesman problem
 import copy
 
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy import sqrt
 
@@ -38,6 +39,7 @@ class City:
 
     @staticmethod
     def distance(c1, c2):
+        # distance = np.sqrt(np.sum((a - b) ** 2))
         return sqrt((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2)
 
     def get_number_city(self):
@@ -47,12 +49,18 @@ class City:
 class SetMatrix:
     """ Использовать заданную матрицу расстояний """
 
-    def __init__(self):
-        self.mat = np.array([[-1., 10., 25., 25., 10.],
-                             [1., -1, 10., 15., 2.],
-                             [8., 9., -1., 20., 10.],
-                             [14., 10., 24., -1., 15.],
-                             [10., 8., 25., 27., -1.]])
+    def __init__(self, _matr=None):
+        self.mat = np.array([[-1., 31., 15., 19., 8., 55],
+                             [19., -1, 22., 31., 7., 35],
+                             [25., 43., -1., 53., 57., 16],
+                             [5., 50., 49., -1., 39., 9],
+                             [24., 24., 33., 5., -1., 14],
+                             [34., 26., 6., 3., 36., -1.]]) if _matr is None else _matr
+        # self.mat = np.array([[-1., 10., 25., 25., 10.],
+        #                      [1., -1, 10., 15., 2.],
+        #                      [8., 9., -1., 20., 10.],
+        #                      [14., 10., 24., -1., 15.],
+        #                      [10., 8., 25., 27., -1.]])
         self.index = [[j for j in range(self.mat.shape[0])] for _ in range(2)]  # Индексы строк и столбцов
         self.set_diagonal()
 
@@ -162,11 +170,26 @@ def select_wrong_root(my_root: list, new_edge: tuple) -> list:
     return wrong_root
 
 
-if __name__ == "__main__":
-    # mat = DefineMatrix(points).build_matrix()
-    # DefineMatrix.matrix_print(mat)
+def sort_root(my_root: list) -> list:
+    """ Создать цепочку последовательных звеньев """
 
-    sm = SetMatrix()
+    my_root.sort()
+    path = [my_root[0]]
+    right_hand = my_root[0][1]
+
+    for _ in range(1, len(my_root)):
+        for xy in my_root:
+            if right_hand == xy[0]:
+                path.append(xy)
+                right_hand = xy[1]
+                break
+    return path
+
+
+if __name__ == "__main__":
+    mat = DefineMatrix(points).build_matrix()
+
+    sm = SetMatrix(mat)
     mat = sm.get_matrix()
 
     plans = list()  # Планы
@@ -253,5 +276,31 @@ if __name__ == "__main__":
     for point in v_null:
         root.append((ind[0][point[0]], ind[1][point[1]]))
 
+    root = sort_root(root)
     final = igs.get_root_estimation(root)
     print(root, final)
+
+    X = [k[0] for k in points]
+    Y = [k[1] for k in points]
+
+    X1 = [X[root[i][0]] for i in np.arange(0, len(root), 1)]
+    Y1 = [Y[root[i][0]] for i in np.arange(0, len(root), 1)]
+
+    print(points)
+    print(root)
+    print(X1)
+    print(Y1)
+
+    X2 = [X[root[len(root) - 1][0]], X[root[0][0]]]
+    Y2 = [Y[root[len(root) - 1][0]], Y[root[0][0]]]
+
+    plt.title('Всего городов: {}\n Координаты X,Y заданы'.format(len(root)))
+    plt.plot(X1, Y1, color='r', linestyle=' ', marker='o')
+    plt.plot(X1, Y1, color='b', linewidth=1)
+
+    plt.plot(X2[1], Y2[1], color='g', linestyle=' ', marker='o')
+    plt.plot(X2, Y2, color='g', linewidth=2, linestyle='-', label='Путь от  последнего \n к первому городу')
+    plt.legend(loc='best')
+
+    plt.grid(True)
+    plt.show()

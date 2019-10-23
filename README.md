@@ -38,4 +38,6 @@ n = max(matrix, key=lambda x:x[1]) # Максимальное значение �
 
     logger.info("Program started")
 
-https://www.python-course.eu/python3_lambda.php 
+https://www.python-course.eu/python3_lambda.php
+https://ru.stackoverflow.com/questions/1037560/%d0%a1%d0%be%d1%80%d1%82%d0%b8%d1%80%d0%be%d0%b2%d0%ba%d0%b0-%d1%81%d0%bf%d0%b8%d1%81%d0%ba%d0%b0-%d0%ba%d0%be%d1%80%d1%82%d0%b5%d0%b6%d0%b5%d0%b9
+
