@@ -43,4 +43,6 @@ print(sum_vector)
 
 df.drop('2', axis=1, inplace=True)
 df.drop('4', axis=0, inplace=True)
+df = df.drop(df.columns[[1]], axis=1)
 print(df)
+print(df.iloc[1][1], df.loc['5']['4'])
