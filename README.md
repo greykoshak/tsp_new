@@ -23,6 +23,7 @@ print("res = {}".format(res1))
 n = max(matrix, key=lambda x:x[1]) # Максимальное значение по второму элементу
 
 # https://python-scripts.com/logging-python
+https://docs.python.org/3/library/logging.html
 
     logger = logging.getLogger(__name__)
 
@@ -54,5 +55,15 @@ https://pythonworld.ru/novosti-mira-python/scientific-graphics-in-python.html
 https://thispointer.com/pandas-dataframe-get-minimum-values-in-rows-or-columns-their-index-position/
 https://askvoprosy.com/voprosy/pandas-subtract-row-mean-from-each-element-in-row
 https://khashtamov.com/ru/pandas-introduction/
+https://younglinux.info/python/feature/generators
+
+temp_list = [(1, 3), (5, 4), (6, 2), (4, 1), (3, 6), (2, 5)]
+d = dict(temp_list)
+new_list = [min(temp_list)]
+for _ in range(len(temp_list) - 1):
+    x = new_list[-1][1]
+    new_list.append((x, d.get(x)))
+
+print(new_list)
 
 

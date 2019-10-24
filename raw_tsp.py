@@ -183,7 +183,7 @@ def sort_root(my_root: list) -> list:
 
 
 if __name__ == "__main__":
-    mat = DefineMatrix(points).build_matrix()
+    mat = np.round(DefineMatrix(points).build_matrix(), 2)
 
     sm = SetMatrix(mat)
     mat = sm.get_matrix()
