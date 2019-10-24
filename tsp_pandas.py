@@ -51,7 +51,7 @@ class GraphScore:
 
     def __init__(self, df):
         self.df = df
-        self.f0 = {"f0_root": list(), "d_min": 0}
+        self.f0 = {"path0": [], "d_min": 0}
         self.f0_estimate()
 
     def f0_estimate(self):
@@ -61,7 +61,7 @@ class GraphScore:
         path.append(path[0])
 
         for i in range(self.df.shape[0]):
-            self.f0["f0_root"].append((path[i], path[i + 1]))
+            self.f0["path0"].append((path[i], path[i + 1]))
             self.f0["d_min"] += self.df.iloc[path[i]][path[i + 1]]
 
     def get_estimation(self):
@@ -89,6 +89,29 @@ def reduction(df):
     return di.sum() + dj.sum(), df
 
 
+def graph_edge(df):
+    """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
+
+    result = np.where(df == 0)  # Найти все нулевые элементы
+    _v_null = zip(result[0], result[1])  # Вектор, содержащий координаты нулевых элементов
+    max_value = list()  # Оценки нулевых точек
+    pnt = list()  # Координаты нулевых точек
+    inf = float('inf')
+
+    for k in _v_null:
+        df.iloc[k[0]][k[1]], inf = inf, df.iloc[k[0]][k[1]]
+        print(k[0])
+        di = df.iloc[k[0]].min(axis=1)
+        print(di)
+        dj = df.iloc[k[1]].min()
+        max_value.append(di + dj)
+        pnt.append((k[0], k[1]))
+        df.iloc[k[0]][k[1]], inf = inf, df.iloc[k[0]][k[1]]
+    print(max_value)
+    idx = max_value.index(max(max_value))
+    return pnt[idx]  # Ребро с реальными узлами
+
+
 if __name__ == "__main__":
     class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
     df_mat = class_build_matrix.get_df()
@@ -101,18 +124,21 @@ if __name__ == "__main__":
         if first_pass:
             graph_score = GraphScore(df_mat)
             f0_dict = graph_score.get_estimation()
-            print("f0 root is: {}, it's score is: {}".format(f0_dict["f0_root"], f0_dict["d_min"]))
+            print("f0 root is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
 
             d_min_matrix = reduction(df_mat)
             d_min, df_mat = d_min_matrix[0], d_min_matrix[1]  # Оценка минимума минимумов =58 и новая матрица
             print("d_min: {}".format(d_min))
 
-            # if d_min == igs.f0:
-            #     root.append(igs.f0_root)
-            #     break
+            if d_min == f0_dict["d_min"]:
+                root.append(f0_dict["path0"])
+                break
 
             first_pass = False
         else:
+            edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
+            print(edge)
+
             build_root = False  # True if there_is_nonzero else False
 
 # mm = DataFrameFromMatrix(mat)
