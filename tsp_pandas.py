@@ -92,22 +92,17 @@ def reduction(df):
 def graph_edge(df):
     """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
 
-    result = np.where(df == 0)  # Найти все нулевые элементы
-    _v_null = zip(result[0], result[1])  # Вектор, содержащий координаты нулевых элементов
-    max_value = list()  # Оценки нулевых точек
-    pnt = list()  # Координаты нулевых точек
+    zero_pos = df[df.eq(0)].stack().reset_index().values
     inf = float('inf')
 
-    for k in _v_null:
-        df.iloc[k[0]][k[1]], inf = inf, df.iloc[k[0]][k[1]]
-        di = df.min(axis=1)[k[0]]
-        dj = df.min(axis=0)[k[1]]
-        max_value.append(di + dj)
-        pnt.append((k[0] + 1, k[1] + 1))
-        df.iloc[k[0]][k[1]], inf = inf, df.iloc[k[0]][k[1]]
-    print(max_value)
-    idx = max_value.index(max(max_value))
-    return pnt[idx]  # Ребро с реальными узлами
+    for k in range(zero_pos.shape[0]):
+        df.loc[zero_pos[k][0]][zero_pos[k][1]], inf = inf, df.loc[zero_pos[k][0]][zero_pos[k][1]]
+        di = df.min(axis=1)[zero_pos[k][0]]
+        dj = df.min(axis=0)[zero_pos[k][1]]
+        zero_pos[k][2] = di + dj
+        df.loc[zero_pos[k][0]][zero_pos[k][1]], inf = inf, df.loc[zero_pos[k][0]][zero_pos[k][1]]
+    idx = max(zero_pos, key=lambda el: el[2])
+    return idx[0], idx[1]  # Ребро с реальными узлами
 
 
 if __name__ == "__main__":
