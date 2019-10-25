@@ -100,12 +100,10 @@ def graph_edge(df):
 
     for k in _v_null:
         df.iloc[k[0]][k[1]], inf = inf, df.iloc[k[0]][k[1]]
-        print(k[0])
-        di = df.iloc[k[0]].min(axis=1)
-        print(di)
-        dj = df.iloc[k[1]].min()
+        di = df.min(axis=1)[k[0]]
+        dj = df.min(axis=0)[k[1]]
         max_value.append(di + dj)
-        pnt.append((k[0], k[1]))
+        pnt.append((k[0] + 1, k[1] + 1))
         df.iloc[k[0]][k[1]], inf = inf, df.iloc[k[0]][k[1]]
     print(max_value)
     idx = max_value.index(max(max_value))
@@ -138,6 +136,7 @@ if __name__ == "__main__":
         else:
             edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
             print(edge)
+            print(df_mat)
 
             build_root = False  # True if there_is_nonzero else False
 
