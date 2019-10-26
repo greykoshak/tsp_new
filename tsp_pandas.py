@@ -105,6 +105,18 @@ def graph_edge(df):
     return idx[0], idx[1]  # Ребро с реальными узлами
 
 
+def eval_options(eval_df, eval_edge):
+    # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
+    df_right = eval_df.copy()
+    df_right.loc[eval_edge[0]][eval_edge[1]] = float('inf')  # Исключаем ребро из маршрута
+
+    eval_right = reduction(df_right)
+    d_right, df_right = eval_right[0], eval_right[1]  # Оценка минимума и новая матрица
+    print("d_min: {}".format(d_min))
+
+    return d_right, df_right
+
+
 if __name__ == "__main__":
     class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
     df_mat = class_build_matrix.get_df()
@@ -132,6 +144,8 @@ if __name__ == "__main__":
             edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
             print(edge)
             print(df_mat)
+            eval_data = eval_options(df_mat,
+                                     edge)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
 
             build_root = False  # True if there_is_nonzero else False
 
