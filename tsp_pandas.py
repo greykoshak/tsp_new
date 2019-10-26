@@ -105,16 +105,48 @@ def graph_edge(df):
     return idx[0], idx[1]  # Ребро с реальными узлами
 
 
-def eval_options(eval_df, eval_edge):
+def eval_options(eval_df, eval_edge, eval_root):
     # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
     df_right = eval_df.copy()
     df_right.loc[eval_edge[0]][eval_edge[1]] = float('inf')  # Исключаем ребро из маршрута
 
     eval_right = reduction(df_right)
     d_right, df_right = eval_right[0], eval_right[1]  # Оценка минимума и новая матрица
-    print("d_min: {}".format(d_min))
 
-    return d_right, df_right
+    # Вариант "влево" - считаем, что ребро edge входит в маршрут
+    df_left = eval_df.copy()
+    df_left.drop(eval_edge[0], axis=0, inplace=True)  # Delete row
+    df_left.drop(eval_edge[1], axis=1, inplace=True)  # Delete column
+
+    # Исключаем ребра, образующие цикл с уже существующим root
+    inf_list = forbidden_points(eval_df, eval_edge, eval_root)
+
+    for p in inf_list:
+        if p[0] in df_left.index.values and p[1] in df_left.columns.values:
+            df_left.loc[p[0]][p[1]] = float('inf')
+
+    eval_left = reduction(df_left)
+    d_left, df_left = eval_left[0], eval_left[1]  # Оценка минимума и новая матрица
+
+    return d_right, df_right, d_left, df_left
+
+
+def forbidden_points(eval_df, new_edge: tuple, my_root: list) -> list:
+    """ Создать цепочку последовательных звеньев от нового кандидата new_edge """
+
+    path = [new_edge]  # [('2', '3')]
+    poor_points = list()
+
+    for _ in range(len(my_root)):
+        left_item = path[0]
+        right_item = path[-1]
+        path.append(next(filter(lambda x: right_item[1] == x[0], my_root)))
+        path.insert(0, next(filter(lambda x: left_item[0] == x[1], my_root)))
+    if len(path) < eval_df.shape[0] - 1:
+        for i in range(len(path)):
+            for j in range(len(path) - i):
+                poor_points.append((path[j][1], path[i][0]))
+    return poor_points
 
 
 if __name__ == "__main__":
@@ -133,53 +165,13 @@ if __name__ == "__main__":
 
             d_min_matrix = reduction(df_mat)
             d_min, df_mat = d_min_matrix[0], d_min_matrix[1]  # Оценка минимума минимумов =58 и новая матрица
-            print("d_min: {}".format(d_min))
 
             if d_min == f0_dict["d_min"]:
                 root.append(f0_dict["path0"])
                 break
-
             first_pass = False
         else:
             edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
-            print(edge)
-            print(df_mat)
-            eval_data = eval_options(df_mat,
-                                     edge)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
-
+            eval_data = eval_options(df_mat, edge,
+                                     root)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
             build_root = False  # True if there_is_nonzero else False
-
-# mm = DataFrameFromMatrix(mat)
-# df = mm.get_df()
-
-# mm = DataFrameFromPoints(points)
-# df = mm.get_df()
-
-# print(df)
-
-# # Get a series containing minimum value of each column
-# dj = df.min()
-#
-# print('minimum value in each column : ')
-# print(dj)
-#
-# # Get a series containing minimum value of each row
-# di = df.min(axis=1)
-#
-# print('minimum value in each row : ')
-# print(di)
-
-# aa = df.sub(di, axis=0)
-# print(aa)
-
-# bb = df.sub(dj, axis=1)
-# print(bb)
-#
-# sum_vector = di.sum() + dj.sum()
-# print(sum_vector)
-#
-# df.drop('2', axis=1, inplace=True)
-# df.drop('4', axis=0, inplace=True)
-# df = df.drop(df.columns[[1]], axis=1)
-# print(df)
-# print(df.iloc[1][1], df.loc['5']['4'])

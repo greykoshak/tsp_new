@@ -67,3 +67,29 @@ for _ in range(len(temp_list) - 1):
 print(new_list)
 
 
+# # Get a series containing minimum value of each column
+# dj = df.min()
+#
+# print('minimum value in each column : ')
+# print(dj)
+#
+# # Get a series containing minimum value of each row
+# di = df.min(axis=1)
+#
+# print('minimum value in each row : ')
+# print(di)
+
+# aa = df.sub(di, axis=0)
+# print(aa)
+
+# bb = df.sub(dj, axis=1)
+# print(bb)
+#
+# sum_vector = di.sum() + dj.sum()
+# print(sum_vector)
+#
+# df.drop('2', axis=1, inplace=True)
+# df.drop('4', axis=0, inplace=True)
+# df = df.drop(df.columns[[1]], axis=1)
+# print(df)
+# print(df.iloc[1][1], df.loc['5']['4'])
