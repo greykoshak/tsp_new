@@ -58,10 +58,10 @@ class GraphScore:
         """ Первичная оценка нулевого варианта F0=mat(0,1)+mat(1,2)+mat(2,3)+mat(3,4)+mat(4,0)=10+10+20+15+10=65 """
 
         path = [i for i in range(self.df.shape[0])]
-        path.append(path[0])
+        path.append(path[0])  # Добавить первый элемент в конец списка, чтобы замкнуть маршрут
 
         for i in range(self.df.shape[0]):
-            self.f0["path0"].append((path[i], path[i + 1]))
+            self.f0["path0"].append((path[i] + 1, path[i + 1] + 1))
             self.f0["d_min"] += self.df.iloc[path[i]][path[i + 1]]
 
     def get_estimation(self):
@@ -141,7 +141,7 @@ def forbidden_points(eval_df, new_edge: tuple, my_root: list) -> list:
         left_item = path[0]
         right_item = path[-1]
         path.append(next(filter(lambda x: right_item[1] == x[0], my_root)))
-        path.insert(0, next(filter(lambda x: left_item[0] == x[1], my_root)))
+        # path.insert(0, next(filter(lambda x: left_item[0] == x[1], my_root)))
     if len(path) < eval_df.shape[0] - 1:
         for i in range(len(path)):
             for j in range(len(path) - i):
@@ -161,7 +161,7 @@ if __name__ == "__main__":
         if first_pass:
             graph_score = GraphScore(df_mat)
             f0_dict = graph_score.get_estimation()
-            print("f0 root is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
+            print("\nf0 root is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
 
             d_min_matrix = reduction(df_mat)
             d_min, df_mat = d_min_matrix[0], d_min_matrix[1]  # Оценка минимума минимумов =58 и новая матрица
@@ -174,4 +174,25 @@ if __name__ == "__main__":
             edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
             eval_data = eval_options(df_mat, edge,
                                      root)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
-            build_root = False  # True if there_is_nonzero else False
+            print("d_left: {} d_right: {}".format(eval_data[2], eval_data[0]))
+            if eval_data[0] < eval_data[2]:
+                print("Направо!")
+                df_mat = eval_data[1]
+                # est_plans.append(d_right)
+                # plans.append((-edge[0], -edge[1]))
+            else:
+                print("Налево!")
+                df_mat = eval_data[3]
+                # plans.append(edge)
+                # est_plans.append(d_left)
+                root.append(edge)
+                print("*** root: {}".format(root))
+
+                nonzero_arr = df_mat[df_mat.ne(0) & df_mat.ne(float('inf'))].stack().reset_index().values
+                build_root = True if nonzero_arr.size != 0 else False
+
+
+
+
+
+            # build_root = False  # True if there_is_nonzero else False
