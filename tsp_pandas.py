@@ -134,7 +134,7 @@ def eval_options(eval_df, eval_edge, eval_root):
 def forbidden_points(eval_df, new_edge: tuple, my_root: list) -> list:
     """ Создать цепочку последовательных звеньев от нового кандидата new_edge """
 
-    path = [new_edge]  # [('2', '3')]
+    path = [new_edge]
     poor_points = list()
 
     for _ in range(len(my_root)):
@@ -143,7 +143,7 @@ def forbidden_points(eval_df, new_edge: tuple, my_root: list) -> list:
         path.append(next(filter(lambda x: right_item[1] == x[0], my_root)))
         # path.insert(0, next(filter(lambda x: left_item[0] == x[1], my_root)))
     if len(path) < eval_df.shape[0] - 1:
-        for i in range(len(path)):
+        for i in range(len(path) - 1):
             for j in range(len(path) - i):
                 poor_points.append((path[j][1], path[i][0]))
     return poor_points
@@ -172,9 +172,12 @@ if __name__ == "__main__":
             first_pass = False
         else:
             edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
+            print("Кандидат: {}".format(edge))
             eval_data = eval_options(df_mat, edge,
                                      root)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
             print("d_left: {} d_right: {}".format(eval_data[2], eval_data[0]))
+            print("d_right: \n{}".format(eval_data[1]))
+            print("d_left: \n{}".format(eval_data[3]))
             if eval_data[0] < eval_data[2]:
                 print("Направо!")
                 df_mat = eval_data[1]
