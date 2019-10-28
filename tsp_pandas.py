@@ -1,7 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
-import matplotlib.pyplot as plt
 
 GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
                 [1., 0., 10., 15., 2.],
@@ -47,14 +47,9 @@ class DataFrameFromPoints:
         return self.matrix
 
     def get_split_coordinates(self):
-        x = [x[0] for x in self.coordinate_list]
-        y = [y[1] for y in self.coordinate_list]
+        x = [x[0] for x in self.coordinate_list.values]
+        y = [y[1] for y in self.coordinate_list.values]
         return x, y
-
-
-class ShowRoute:
-    def __init__(self, ref_to_df, show_route):
-        pass
 
 
 class GraphScore:
@@ -83,6 +78,30 @@ class GraphScore:
 
         est_path = sum([self.df.loc[x[0]][x[1]] for x in my_route])
         return est_path
+
+
+class ShowRoute:
+    def __init__(self, ref_to_df, show_route):
+        self.coord = ref_to_df.get_split_coordinates()
+        self.route = show_route
+        self.route_coord_x = [self.coord[0][int(self.route[i][0]) - 1] for i in range(len(self.route))]
+        self.route_coord_y = [self.coord[1][int(self.route[i][0]) - 1] for i in range(len(self.route))]
+        self.route_coord_x2 = [self.coord[0][int(self.route[-1][0]) - 1], self.coord[0][int(self.route[0][0]) - 1]]
+        self.route_coord_y2 = [self.coord[1][int(self.route[-1][0]) - 1], self.coord[1][int(self.route[0][0]) - 1]]
+        self.show_route()
+
+    def show_route(self):
+        plt.title('Всего городов: {}\n Координаты X,Y заданы'.format(len(self.coord[0])))
+        plt.plot(self.route_coord_x, self.route_coord_y, color='r', linestyle=' ', marker='o')
+        plt.plot(self.route_coord_x, self.route_coord_y, color='b', linewidth=1)
+
+        plt.plot(self.route_coord_x2[1], self.route_coord_y2[1], color='b', linestyle=' ', marker='o')
+        plt.plot(self.route_coord_x2, self.route_coord_y2, color='m', linewidth=2, linestyle='--',
+                 label='Путь от  последнего \n к первому городу')
+        plt.legend(loc='best')
+
+        plt.grid(True)
+        plt.show()
 
 
 def reduction(df):
@@ -189,8 +208,8 @@ def sort_route(unsorted_route: list) -> list:
 
 
 if __name__ == "__main__":
-    # class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
-    class_build_matrix = DataFrameFromPoints(POINTS)
+    class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
+    # class_build_matrix = DataFrameFromPoints(POINTS)
     df_mat = class_build_matrix.get_df()
 
     route = list()  # Искомый маршрут комивояжера
@@ -236,4 +255,5 @@ if __name__ == "__main__":
     final_est = graph_score.get_route_estimation(route)
     print(route, final_est)
 
-    show = ShowRoute()
+    if isinstance(class_build_matrix, DataFrameFromPoints):
+        show = ShowRoute(class_build_matrix, route)
