@@ -235,3 +235,5 @@ if __name__ == "__main__":
 
     final_est = graph_score.get_route_estimation(route)
     print(route, final_est)
+
+    show = ShowRoute()
