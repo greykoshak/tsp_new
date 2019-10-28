@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
+import matplotlib.pyplot as plt
 
 GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
                 [1., 0., 10., 15., 2.],
@@ -45,6 +46,16 @@ class DataFrameFromPoints:
 
         return self.matrix
 
+    def get_split_coordinates(self):
+        x = [x[0] for x in self.coordinate_list]
+        y = [y[1] for y in self.coordinate_list]
+        return x, y
+
+
+class ShowRoute:
+    def __init__(self, ref_to_df, show_route):
+        pass
+
 
 class GraphScore:
     """ Методы поиска в алгоритме ветвей и границ """
@@ -67,12 +78,11 @@ class GraphScore:
     def get_estimation(self):
         return self.f0
 
-    def get_root_estimation(self, my_root):
+    def get_route_estimation(self, my_route):
         """ Оценка заданного варианта """
 
-        for pnt in my_root:
-            self.final += self.mat[pnt[0]][pnt[1]]
-        return self.final
+        est_path = sum([self.df.loc[x[0]][x[1]] for x in my_route])
+        return est_path
 
 
 def reduction(df):
@@ -105,7 +115,7 @@ def graph_edge(df):
     return idx[0], idx[1]  # Ребро с реальными узлами
 
 
-def eval_options(eval_df, eval_edge, eval_root):
+def eval_options(eval_df, eval_edge, eval_route):
     # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
     df_right = eval_df.copy()
     df_right.loc[eval_edge[0]][eval_edge[1]] = float('inf')  # Исключаем ребро из маршрута
@@ -118,8 +128,8 @@ def eval_options(eval_df, eval_edge, eval_root):
     df_left.drop(eval_edge[0], axis=0, inplace=True)  # Delete row
     df_left.drop(eval_edge[1], axis=1, inplace=True)  # Delete column
 
-    # Исключаем ребра, образующие цикл с уже существующим root
-    inf_list = forbidden_points(eval_df, eval_edge, eval_root)
+    # Исключаем ребра, образующие цикл с уже существующим route
+    inf_list = forbidden_points(eval_edge, eval_route)
 
     for p in inf_list:
         if p[0] in df_left.index.values and p[1] in df_left.columns.values:
@@ -131,53 +141,80 @@ def eval_options(eval_df, eval_edge, eval_root):
     return d_right, df_right, d_left, df_left
 
 
-def forbidden_points(eval_df, new_edge: tuple, my_root: list) -> list:
+def forbidden_points(new_edge: tuple, my_route: list) -> list:
     """ Создать цепочку последовательных звеньев от нового кандидата new_edge """
 
     path = [new_edge]
     poor_points = list()
 
-    for _ in range(len(my_root)):
+    for _ in range(len(my_route)):
         left_item = path[0]
         right_item = path[-1]
-        path.append(next(filter(lambda x: right_item[1] == x[0], my_root)))
-        # path.insert(0, next(filter(lambda x: left_item[0] == x[1], my_root)))
-    if len(path) < eval_df.shape[0] - 1:
-        for i in range(len(path) - 1):
+
+        next_item = next(filter(lambda x: right_item[1] == x[0], my_route), False)
+        if next_item:
+            path.append(next_item)
+
+        prev_item = next(filter(lambda x: left_item[0] == x[1], my_route), False)
+        if prev_item:
+            path.insert(0, prev_item)
+
+    if path:
+        for i in range(len(path)):
             for j in range(len(path) - i):
                 poor_points.append((path[j][1], path[i][0]))
     return poor_points
 
 
+def form_final_route(df_mat_zero, final_route):
+    """ Сформировать окончательный маршрут на базе нулевых значений """
+
+    zero_pos = df_mat[df_mat_zero.eq(0)].stack().reset_index().values
+
+    for k in range(zero_pos.shape[0]):
+        final_route.append((zero_pos[k][0], zero_pos[k][1]))
+    return final_route
+
+
+def sort_route(unsorted_route: list) -> list:
+    """ Создать цепочку последовательных звеньев """
+
+    path = [min(unsorted_route)]
+    for _ in range(len(unsorted_route) - 1):
+        next_item = path[-1]
+        path.append(
+            next(filter(lambda x: next_item[1] == x[0], unsorted_route))
+        )
+    return path
+
+
 if __name__ == "__main__":
-    class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
+    # class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
+    class_build_matrix = DataFrameFromPoints(POINTS)
     df_mat = class_build_matrix.get_df()
 
-    root = list()  # Искомый маршрут комивояжера
+    route = list()  # Искомый маршрут комивояжера
 
-    first_pass, build_root = True, True  # build_root: Условие работы цикла: пока есть ненулевые элементы
+    first_pass, build_route = True, True  # build_route: Условие работы цикла: пока есть ненулевые элементы
 
-    while build_root:
+    while build_route:
         if first_pass:
             graph_score = GraphScore(df_mat)
             f0_dict = graph_score.get_estimation()
-            print("\nf0 root is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
+            print("\nf0 route is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
 
             d_min_matrix = reduction(df_mat)
             d_min, df_mat = d_min_matrix[0], d_min_matrix[1]  # Оценка минимума минимумов =58 и новая матрица
 
             if d_min == f0_dict["d_min"]:
-                root.append(f0_dict["path0"])
+                route.append(f0_dict["path0"])
                 break
             first_pass = False
         else:
             edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
             print("Кандидат: {}".format(edge))
             eval_data = eval_options(df_mat, edge,
-                                     root)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
-            print("d_left: {} d_right: {}".format(eval_data[2], eval_data[0]))
-            print("d_right: \n{}".format(eval_data[1]))
-            print("d_left: \n{}".format(eval_data[3]))
+                                     route)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
             if eval_data[0] < eval_data[2]:
                 print("Направо!")
                 df_mat = eval_data[1]
@@ -188,14 +225,13 @@ if __name__ == "__main__":
                 df_mat = eval_data[3]
                 # plans.append(edge)
                 # est_plans.append(d_left)
-                root.append(edge)
-                print("*** root: {}".format(root))
+                route.append(edge)
 
                 nonzero_arr = df_mat[df_mat.ne(0) & df_mat.ne(float('inf'))].stack().reset_index().values
-                build_root = True if nonzero_arr.size != 0 else False
+                build_route = True if nonzero_arr.size != 0 else False
 
+    route = form_final_route(df_mat, route)
+    route = sort_route(route)
 
-
-
-
-            # build_root = False  # True if there_is_nonzero else False
+    final_est = graph_score.get_route_estimation(route)
+    print(route, final_est)
