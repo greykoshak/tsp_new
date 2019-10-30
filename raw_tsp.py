@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy import sqrt
 
-points = [(800, 400), (500, 300), (900, 500), (900, 400), (700, 100), (500, 500), (900, 300), (100, 300)]
+# points = [(800, 400), (500, 300), (900, 500), (900, 400), (700, 100), (500, 500), (900, 300), (100, 300)]
+points = [(1, 1), (2, 2)]
 
 
 class DefineMatrix:
@@ -204,7 +205,7 @@ if __name__ == "__main__":
             est_plans.append(d_min)
 
             if d_min == igs.f0:
-                root.append(igs.f0_root)
+                root = igs.f0_root
                 break
             first_pass = False
         else:
@@ -264,17 +265,18 @@ if __name__ == "__main__":
                 numbers = list(filter(lambda x: x != 0 and x != float('inf'), bool_mat))
                 build_root = True if numbers else False
 
-    find = np.where(mat == 0)  # Найти все нулевые элементы
-    v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
+    if d_min < igs.f0:
+        find = np.where(mat == 0)  # Найти все нулевые элементы
+        v_null = zip(find[0], find[1])  # Вектор, содержащий координаты нулевых элементов
 
-    ind = sm.get_index()
+        ind = sm.get_index()
 
-    for point in v_null:
-        root.append((ind[0][point[0]], ind[1][point[1]]))
+        for point in v_null:
+            root.append((ind[0][point[0]], ind[1][point[1]]))
 
-    root = sort_root(root)
-    final = igs.get_root_estimation(root)
-    print(root, final)
+        root = sort_root(root)
+        final = igs.get_root_estimation(root)
+        print(root, final)
 
     X = [k[0] for k in points]
     Y = [k[1] for k in points]

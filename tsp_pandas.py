@@ -11,6 +11,7 @@ GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
 
 # Координаты городов
 POINTS = [(800, 400), (500, 300), (900, 500), (900, 400), (700, 100), (500, 500), (900, 300), (100, 300)]
+# POINTS = [(1, 1), (2, 2)]
 
 
 class DataFrameFromMatrix:
@@ -92,10 +93,10 @@ class ShowRoute:
 
     def show_route(self):
         plt.title('Всего городов: {}\n Координаты X,Y заданы'.format(len(self.coord[0])))
-        plt.plot(self.route_coord_x, self.route_coord_y, color='r', linestyle=' ', marker='o')
+        plt.plot(self.route_coord_x, self.route_coord_y, color='b', linestyle=' ', marker='o')
         plt.plot(self.route_coord_x, self.route_coord_y, color='b', linewidth=1)
 
-        plt.plot(self.route_coord_x2[1], self.route_coord_y2[1], color='b', linestyle=' ', marker='o')
+        plt.plot(self.route_coord_x2[1], self.route_coord_y2[1], color='r', linestyle=' ', marker='o')
         plt.plot(self.route_coord_x2, self.route_coord_y2, color='m', linewidth=2, linestyle='--',
                  label='Путь от  последнего \n к первому городу')
         plt.legend(loc='best')
@@ -208,8 +209,8 @@ def sort_route(unsorted_route: list) -> list:
 
 
 if __name__ == "__main__":
-    class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
-    # class_build_matrix = DataFrameFromPoints(POINTS)
+    # class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
+    class_build_matrix = DataFrameFromPoints(POINTS)
     df_mat = class_build_matrix.get_df()
 
     route = list()  # Искомый маршрут комивояжера
@@ -226,7 +227,7 @@ if __name__ == "__main__":
             d_min, df_mat = d_min_matrix[0], d_min_matrix[1]  # Оценка минимума минимумов =58 и новая матрица
 
             if d_min == f0_dict["d_min"]:
-                route.append(f0_dict["path0"])
+                route = f0_dict["path0"]
                 break
             first_pass = False
         else:
@@ -249,11 +250,12 @@ if __name__ == "__main__":
                 nonzero_arr = df_mat[df_mat.ne(0) & df_mat.ne(float('inf'))].stack().reset_index().values
                 build_route = True if nonzero_arr.size != 0 else False
 
-    route = form_final_route(df_mat, route)
-    route = sort_route(route)
+    if d_min < f0_dict["d_min"]:
+        route = form_final_route(df_mat, route)
+        route = sort_route(route)
 
-    final_est = graph_score.get_route_estimation(route)
-    print(route, final_est)
+        final_est = graph_score.get_route_estimation(route)
+        print(route, final_est)
 
     if isinstance(class_build_matrix, DataFrameFromPoints):
         show = ShowRoute(class_build_matrix, route)
