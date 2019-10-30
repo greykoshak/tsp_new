@@ -41,7 +41,7 @@ class City:
     @staticmethod
     def distance(c1, c2):
         # distance = np.sqrt(np.sum((a - b) ** 2))
-        return sqrt((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2)
+        return np.sqrt((c1.x - c2.x) ** 2 + (c1.y - c2.y) ** 2)
 
     def get_number_city(self):
         return self.number
