@@ -11,7 +11,7 @@ GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
 
 # Координаты городов
 POINTS = [(800, 400), (500, 300), (900, 500), (900, 400), (700, 100), (500, 500), (900, 300), (100, 300)]
-# POINTS = [(1, 1), (2, 2)]
+
 
 class DataFrameFromMatrix:
     """ Матрица расстояний задана """
@@ -237,13 +237,9 @@ if __name__ == "__main__":
             if eval_data[0] < eval_data[2]:
                 print("Направо!")
                 df_mat = eval_data[1]
-                # est_plans.append(d_right)
-                # plans.append((-edge[0], -edge[1]))
             else:
                 print("Налево!")
                 df_mat = eval_data[3]
-                # plans.append(edge)
-                # est_plans.append(d_left)
                 route.append(edge)
 
                 nonzero_arr = df_mat[df_mat.ne(0) & df_mat.ne(float('inf'))].stack().reset_index().values
