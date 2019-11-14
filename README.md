@@ -25,6 +25,8 @@ n = max(matrix, key=lambda x:x[1]) # Максимальное значение �
 # https://python-scripts.com/logging-python
 https://docs.python.org/3/library/logging.html
 
+import logging
+
     logger = logging.getLogger(__name__)
 
     logger.setLevel(logging.INFO)

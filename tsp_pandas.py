@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import logging
 from scipy.spatial.distance import pdist, squareform
 
 GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
@@ -11,6 +12,78 @@ GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
 
 # Координаты городов
 POINTS = [(800, 400), (500, 300), (900, 500), (900, 400), (700, 100), (500, 500), (900, 300), (100, 300)]
+
+
+class TSP:
+    """ Travel Salesman Problem: branch and bound """
+
+    # data_type: 0 - список точек (x, y)
+    #          > 0 - матрица расстояний
+    def __init__(self, data=None, data_type=0):
+        if data is None or not isinstance(data, list):
+            raise TypeError("TSP: Do not define correct input data: list of points (x, y) or predefine matrix")
+        self.data = data
+        self.class_build_matrix = DataFrameFromPoints(data) if data_type == 0 else DataFrameFromMatrix(data)
+        self._df_mat = self.class_build_matrix.get_df()
+
+    def run(self):
+        """ Find out final route """
+
+        logger = logging.getLogger(__name__)
+
+        logger.setLevel(logging.INFO)
+
+        # create the logging file handler
+        fh = logging.FileHandler("tsp.log", "w")
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s', "%H:%M:%S")
+        fh.setFormatter(formatter)
+
+        # add handler to logger object
+        logger.addHandler(fh)
+        logger.info("Program started {}".format(self.data))
+
+        route = list()  # Искомый маршрут комивояжера
+        first_pass, build_route = True, True  # build_route: Условие работы цикла: пока есть ненулевые элементы
+
+        while build_route:
+            if first_pass:
+                graph_score = GraphScore(self._df_mat)
+                f0_dict = graph_score.get_estimation()
+                print("\nf0 route is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
+
+                d_min_matrix = UtilityTSP.reduction(self._df_mat)
+                d_min, self._df_mat = d_min_matrix[0], d_min_matrix[1]  # Оценка минимума минимумов =58 и новая матрица
+
+                if d_min == f0_dict["d_min"]:
+                    route = f0_dict["path0"]
+                    break
+                first_pass = False
+            else:
+                edge = UtilityTSP.graph_edge(self._df_mat)  # Поиск ребра-кандидата графа
+                print("Кандидат: {}".format(edge))
+                eval_data = UtilityTSP.eval_options(self._df_mat, edge, route)
+                if eval_data[0] < eval_data[2]:
+                    print("Направо!")
+                    self._df_mat = eval_data[1]
+                else:
+                    print("Налево!")
+                    self._df_mat = eval_data[3]
+                    route.append(edge)
+
+                    nonzero_arr = self._df_mat[
+                        self._df_mat.ne(0) & self._df_mat.ne(float('inf'))].stack().reset_index().values
+                    build_route = True if nonzero_arr.size != 0 else False
+
+        if d_min < f0_dict["d_min"]:
+            route = UtilityTSP.form_final_route(self._df_mat, route)
+            route = UtilityTSP.sort_route(route)
+
+            final_est = graph_score.get_route_estimation(route)
+            print(route, final_est)
+            logger.info("Final route is \n{}, {}".format(route, final_est))
+
+        if isinstance(self.class_build_matrix, DataFrameFromPoints):
+            ShowRoute(self.class_build_matrix, route)
 
 
 class DataFrameFromMatrix:
@@ -104,153 +177,115 @@ class ShowRoute:
         plt.show()
 
 
-def reduction(df):
-    """ Редукция строк и столбцов, получение di+dj и новой матрицы после редукций """
+class UtilityTSP:
+    """ Additional methods for a matrix treatment """
 
-    # Get a series containing minimum value of each row
-    di = df.min(axis=1)
-    df = df.sub(di, axis=0)
+    @staticmethod
+    def reduction(df):
+        """ Редукция строк и столбцов, получение di+dj и новой матрицы после редукций """
 
-    # Get a series containing minimum value of each column
-    dj = df.min()
-    df = df.sub(dj, axis=1)
+        # Get a series containing minimum value of each row
+        di = df.min(axis=1)
+        df = df.sub(di, axis=0)
 
-    return di.sum() + dj.sum(), df
+        # Get a series containing minimum value of each column
+        dj = df.min()
+        df = df.sub(dj, axis=1)
 
+        return di.sum() + dj.sum(), df
 
-def graph_edge(df):
-    """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
+    @staticmethod
+    def graph_edge(df):
+        """ Оценка нулевых элементов для поиска ребра графа -кандидата на включение в маршрут """
 
-    zero_pos = df[df.eq(0)].stack().reset_index().values
-    inf = float('inf')
+        zero_pos = df[df.eq(0)].stack().reset_index().values
+        inf = float('inf')
 
-    for k in range(zero_pos.shape[0]):
-        df.loc[zero_pos[k][0]][zero_pos[k][1]], inf = inf, df.loc[zero_pos[k][0]][zero_pos[k][1]]
-        di = df.min(axis=1)[zero_pos[k][0]]
-        dj = df.min(axis=0)[zero_pos[k][1]]
-        zero_pos[k][2] = di + dj
-        df.loc[zero_pos[k][0]][zero_pos[k][1]], inf = inf, df.loc[zero_pos[k][0]][zero_pos[k][1]]
-    idx = max(zero_pos, key=lambda el: el[2])
-    return idx[0], idx[1]  # Ребро с реальными узлами
+        for k in range(zero_pos.shape[0]):
+            df.loc[zero_pos[k][0]][zero_pos[k][1]], inf = inf, df.loc[zero_pos[k][0]][zero_pos[k][1]]
+            di = df.min(axis=1)[zero_pos[k][0]]
+            dj = df.min(axis=0)[zero_pos[k][1]]
+            zero_pos[k][2] = di + dj
+            df.loc[zero_pos[k][0]][zero_pos[k][1]], inf = inf, df.loc[zero_pos[k][0]][zero_pos[k][1]]
+        idx = max(zero_pos, key=lambda el: el[2])
+        return idx[0], idx[1]  # Ребро с реальными узлами
 
+    @staticmethod
+    def eval_options(eval_df, eval_edge, eval_route):
+        # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
+        df_right = eval_df.copy()
+        df_right.loc[eval_edge[0]][eval_edge[1]] = float('inf')  # Исключаем ребро из маршрута
 
-def eval_options(eval_df, eval_edge, eval_route):
-    # Вариант "вправо" - считаем, что ребро edge не входит в маршрут
-    df_right = eval_df.copy()
-    df_right.loc[eval_edge[0]][eval_edge[1]] = float('inf')  # Исключаем ребро из маршрута
+        eval_right = UtilityTSP.reduction(df_right)
+        d_right, df_right = eval_right[0], eval_right[1]  # Оценка минимума и новая матрица
 
-    eval_right = reduction(df_right)
-    d_right, df_right = eval_right[0], eval_right[1]  # Оценка минимума и новая матрица
+        # Вариант "влево" - считаем, что ребро edge входит в маршрут
+        df_left = eval_df.copy()
+        df_left.drop(eval_edge[0], axis=0, inplace=True)  # Delete row
+        df_left.drop(eval_edge[1], axis=1, inplace=True)  # Delete column
 
-    # Вариант "влево" - считаем, что ребро edge входит в маршрут
-    df_left = eval_df.copy()
-    df_left.drop(eval_edge[0], axis=0, inplace=True)  # Delete row
-    df_left.drop(eval_edge[1], axis=1, inplace=True)  # Delete column
+        # Исключаем ребра, образующие цикл с уже существующим route
+        inf_list = UtilityTSP.forbidden_points(eval_edge, eval_route)
 
-    # Исключаем ребра, образующие цикл с уже существующим route
-    inf_list = forbidden_points(eval_edge, eval_route)
+        for p in inf_list:
+            if p[0] in df_left.index.values and p[1] in df_left.columns.values:
+                df_left.loc[p[0]][p[1]] = float('inf')
 
-    for p in inf_list:
-        if p[0] in df_left.index.values and p[1] in df_left.columns.values:
-            df_left.loc[p[0]][p[1]] = float('inf')
+        eval_left = UtilityTSP.reduction(df_left)
+        d_left, df_left = eval_left[0], eval_left[1]  # Оценка минимума и новая матрица
 
-    eval_left = reduction(df_left)
-    d_left, df_left = eval_left[0], eval_left[1]  # Оценка минимума и новая матрица
+        return d_right, df_right, d_left, df_left
 
-    return d_right, df_right, d_left, df_left
+    @staticmethod
+    def forbidden_points(new_edge: tuple, my_route: list) -> list:
+        """ Создать цепочку последовательных звеньев от нового кандидата new_edge """
 
+        path = [new_edge]
+        poor_points = list()
 
-def forbidden_points(new_edge: tuple, my_route: list) -> list:
-    """ Создать цепочку последовательных звеньев от нового кандидата new_edge """
+        for _ in range(len(my_route)):
+            left_item = path[0]
+            right_item = path[-1]
 
-    path = [new_edge]
-    poor_points = list()
+            next_item = next(filter(lambda x: right_item[1] == x[0], my_route), False)
+            if next_item:
+                path.append(next_item)
 
-    for _ in range(len(my_route)):
-        left_item = path[0]
-        right_item = path[-1]
+            prev_item = next(filter(lambda x: left_item[0] == x[1], my_route), False)
+            if prev_item:
+                path.insert(0, prev_item)
 
-        next_item = next(filter(lambda x: right_item[1] == x[0], my_route), False)
-        if next_item:
-            path.append(next_item)
+        if path:
+            for i in range(len(path)):
+                for j in range(len(path) - i):
+                    poor_points.append((path[j][1], path[i][0]))
+        return poor_points
 
-        prev_item = next(filter(lambda x: left_item[0] == x[1], my_route), False)
-        if prev_item:
-            path.insert(0, prev_item)
+    @staticmethod
+    def form_final_route(df_mat_zero, final_route):
+        """ Сформировать окончательный маршрут на базе нулевых значений """
 
-    if path:
-        for i in range(len(path)):
-            for j in range(len(path) - i):
-                poor_points.append((path[j][1], path[i][0]))
-    return poor_points
+        zero_pos = df_mat_zero[df_mat_zero.eq(0)].stack().reset_index().values
 
+        for k in range(zero_pos.shape[0]):
+            final_route.append((zero_pos[k][0], zero_pos[k][1]))
+        return final_route
 
-def form_final_route(df_mat_zero, final_route):
-    """ Сформировать окончательный маршрут на базе нулевых значений """
+    @staticmethod
+    def sort_route(unsorted_route: list) -> list:
+        """ Создать цепочку последовательных звеньев """
 
-    zero_pos = df_mat[df_mat_zero.eq(0)].stack().reset_index().values
-
-    for k in range(zero_pos.shape[0]):
-        final_route.append((zero_pos[k][0], zero_pos[k][1]))
-    return final_route
-
-
-def sort_route(unsorted_route: list) -> list:
-    """ Создать цепочку последовательных звеньев """
-
-    path = [min(unsorted_route)]
-    for _ in range(len(unsorted_route) - 1):
-        next_item = path[-1]
-        path.append(
-            next(filter(lambda x: next_item[1] == x[0], unsorted_route))
-        )
-    return path
+        path = [min(unsorted_route)]
+        for _ in range(len(unsorted_route) - 1):
+            next_item = path[-1]
+            path.append(
+                next(filter(lambda x: next_item[1] == x[0], unsorted_route))
+            )
+        return path
 
 
 if __name__ == "__main__":
-    # class_build_matrix = DataFrameFromMatrix(GIVEN_MATRIX)
-    class_build_matrix = DataFrameFromPoints(POINTS)
-    df_mat = class_build_matrix.get_df()
-
-    route = list()  # Искомый маршрут комивояжера
-
-    first_pass, build_route = True, True  # build_route: Условие работы цикла: пока есть ненулевые элементы
-
-    while build_route:
-        if first_pass:
-            graph_score = GraphScore(df_mat)
-            f0_dict = graph_score.get_estimation()
-            print("\nf0 route is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
-
-            d_min_matrix = reduction(df_mat)
-            d_min, df_mat = d_min_matrix[0], d_min_matrix[1]  # Оценка минимума минимумов =58 и новая матрица
-
-            if d_min == f0_dict["d_min"]:
-                route = f0_dict["path0"]
-                break
-            first_pass = False
-        else:
-            edge = graph_edge(df_mat)  # Поиск ребра-кандидата графа
-            print("Кандидат: {}".format(edge))
-            eval_data = eval_options(df_mat, edge,
-                                     route)  # Не забыть записать сумму d_right+d_parent, d_left+d_parent в вектор
-            if eval_data[0] < eval_data[2]:
-                print("Направо!")
-                df_mat = eval_data[1]
-            else:
-                print("Налево!")
-                df_mat = eval_data[3]
-                route.append(edge)
-
-                nonzero_arr = df_mat[df_mat.ne(0) & df_mat.ne(float('inf'))].stack().reset_index().values
-                build_route = True if nonzero_arr.size != 0 else False
-
-    if d_min < f0_dict["d_min"]:
-        route = form_final_route(df_mat, route)
-        route = sort_route(route)
-
-        final_est = graph_score.get_route_estimation(route)
-        print(route, final_est)
-
-    if isinstance(class_build_matrix, DataFrameFromPoints):
-        show = ShowRoute(class_build_matrix, route)
+    aaa = TSP(POINTS, 0)
+    # aaa = TSP(GIVEN_MATRIX, 1)
+    print("TSP running....")
+    aaa.run()
