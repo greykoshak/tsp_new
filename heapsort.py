@@ -8,13 +8,13 @@ def heapify(arr, n, i):
     r = 2 * i + 2  # right = 2*i + 2
 
     # See if left child of root exists and is greater than root
-    if l < n and arr[i] < arr[l]:
-    # if l < n and arr[i] > arr[l]:
+    # if l < n and arr[i] < arr[l]:
+    if l < n and arr[i] > arr[l]:
         largest = l
 
     # See if right child of root exists and is greater than root
-    if r < n and arr[largest] < arr[r]:
-    # if r < n and arr[largest] > arr[r]:
+    # if r < n and arr[largest] < arr[r]:
+    if r < n and arr[largest] > arr[r]:
         largest = r
 
     # Change root, if needed
@@ -40,8 +40,7 @@ def heapSort(arr):
 
 
 # Driver code to test above
-# arr = [12, 11, 13, 5, 6, 7, 3, 7, 14, 1, 4, 1]
-arr = []
+arr = [12, 11, 13, 5, 6, 7, 3, 7, 14, 1, 4, 1]
 heapSort(arr)
 n = len(arr)
 print("Sorted array is")
