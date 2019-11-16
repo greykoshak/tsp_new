@@ -7,8 +7,8 @@ def add_element(heap, x):
         p //= 2
 
 
-def del_element(heap, heap_len):
-    heap[heap_len], heap[0] = heap[0], heap[heap_len]
+def del_element(ptr_heap, heap_len):
+    ptr_heap[heap_len], ptr_heap[0] = ptr_heap[0], ptr_heap[heap_len]
     n = heap_len - 1
     p = 0
     moved = True
@@ -16,16 +16,16 @@ def del_element(heap, heap_len):
     while moved and p * 2 <= n:
         moved = False
         max = p * 2 + 1
-        if (max + 1) and heap[max + 1] > heap[max]:
+        if (max + 1) and ptr_heap[max + 1] > ptr_heap[max]:
             max += 1
-        if heap[p] < heap[max]:
-            heap[p], heap[max] = heap[max], heap[p]
+        if ptr_heap[p] < ptr_heap[max]:
+            ptr_heap[p], ptr_heap[max] = ptr_heap[max], ptr_heap[p]
             p = max
             moved = True
 
 
 heap = []
-arr = [12, 11, 13, 5, 6, 7, 3, 7, 14, 1, 4, 1]
+arr = [12, 11, 13, 5, 6, 7, 3, 7, 14, 1, 4, 1, 73, 4, 17, 3, 21, 81]
 
 # Heap creation
 for i in range(0, len(arr)):
