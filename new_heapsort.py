@@ -33,7 +33,7 @@ for i in range(0, len(arr)):
 print("heap: ", heap)
 
 sorted = []
-for i in range(len(heap)-1, 0, -1):
+for i in range(len(heap) - 1, 0, -1):
     sorted.append(heap[0])
     del_element(heap)
 print("sorted: ", sorted, "\n", sorted[::-1])
