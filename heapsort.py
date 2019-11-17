@@ -1,4 +1,16 @@
 # Python program for implementation of heap Sort
+import random
+import time
+
+
+def timer(f):
+    def tmp(*args, **kwargs):
+        t = time.time()
+        res = f(*args, **kwargs)
+        print("Время выполнения функции: {}".format(time.time() - t))
+        return res
+
+    return tmp
 
 
 # To heapify subtree rooted at index i. n is size of heap
@@ -26,6 +38,7 @@ def heapify(arr, n, i):
 
 
 # The main function to sort an array of given size
+@timer
 def heapSort(arr):
     n = len(arr)
 
@@ -40,10 +53,18 @@ def heapSort(arr):
 
 
 # Driver code to test above
-arr = [12, 11, 13, 5, 6, 7, 3, 7, 14, 1, 4, 1]
+arr = [random.randint(1, 100_000) for i in range(1_000_002)]
 heapSort(arr)
 n = len(arr)
-print("Sorted array is")
-for i in range(n):
-    print("%d" % arr[i]),
+# print("Sorted array is")
+# for i in range(n):
+#     print("%d" % arr[i]),
 # This code is contributed by Mohit Kumra
+
+print("Проверка на дорогах-3...")
+fl = True
+for i in range(len(arr) - 1):
+    if arr[i] < arr[i + 1]:
+        print("Error-3: {}, {}".format(arr[i], arr[i + 1]))
+        fl = False
+print("Чисто") if fl else print("3 Не пройден!")
