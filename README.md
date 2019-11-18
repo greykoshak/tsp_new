@@ -15,7 +15,7 @@ def timer(f):
 def func(x, y):
     return sqrt(x**2 + y**2)
 
-
+ 
 res1 = func(3, 4)
 print("res = {}".format(res1))
 
