@@ -1,70 +1,90 @@
-# Python program for implementation of heap Sort
 import random
 import time
 
 
-def timer(f):
-    def tmp(*args, **kwargs):
-        t = time.time()
-        res = f(*args, **kwargs)
-        print("Время выполнения функции: {}".format(time.time() - t))
-        return res
+class Heapify:
+    """ Создание кучи, сортировка: методы """
 
-    return tmp
+    def __init__(self, ptr_heap=None):
+        self.heap = list() if ptr_heap is None else ptr_heap
 
+    def add_element(self, x):
+        """ Добавить элемент в кучу """
+        self.heap.append(x)
+        p = len(self.heap) - 1
+        fl_moved = True
 
-# To heapify subtree rooted at index i. n is size of heap
-def heapify(arr, n, i):
-    largest = i  # Initialize largest as root
-    l = 2 * i + 1  # left = 2*i + 1
-    r = 2 * i + 2  # right = 2*i + 2
+        while fl_moved and p > 0:
+            fl_moved = False
+            if self.heap[p] > self.heap[(p - 1) // 2]:
+                self.heap[p], self.heap[(p - 1) // 2] = self.heap[(p - 1) // 2], self.heap[p]
+                p = (p - 1) // 2
+                fl_moved = True
 
-    # See if left child of root exists and is greater than root
-    # if l < n and arr[i] < arr[l]:
-    if l < n and arr[i] > arr[l]:
-        largest = l
+    def del_element(self):
+        """ Перестроить кучу после удаления корня дерева """
+        node = self.heap.pop()
+        if len(self.heap) > 0:
+            self.heap[0] = node
+        n = len(self.heap)
+        p = 0
+        fl_moved = True
 
-    # See if right child of root exists and is greater than root
-    # if r < n and arr[largest] < arr[r]:
-    if r < n and arr[largest] > arr[r]:
-        largest = r
+        while fl_moved and (p * 2 + 1) < n:
+            fl_moved = False
+            left = p * 2 + 1
+            right = left + 1
+            ptr_max = left
+            if (right < n) and self.heap[right] > self.heap[left]:
+                ptr_max = right
+            if self.heap[p] < self.heap[ptr_max]:
+                self.heap[p], self.heap[ptr_max] = self.heap[ptr_max], self.heap[p]
+                p = ptr_max
+                fl_moved = True
 
-    # Change root, if needed
-    if largest != i:
-        arr[i], arr[largest] = arr[largest], arr[i]  # swap
-
-        # Heapify the root.
-        heapify(arr, n, largest)
-
-
-# The main function to sort an array of given size
-@timer
-def heapSort(arr):
-    n = len(arr)
-
-    # Build a maxheap.
-    for i in range(n, -1, -1):
-        heapify(arr, n, i)
-
-    # One by one extract elements
-    for i in range(n - 1, 0, -1):
-        arr[i], arr[0] = arr[0], arr[i]  # swap
-        heapify(arr, i, 0)
+    def get_heap(self):
+        return self.heap
 
 
-# Driver code to test above
-arr = [random.randint(1, 100_000) for i in range(1_000_002)]
-heapSort(arr)
-n = len(arr)
-# print("Sorted array is")
-# for i in range(n):
-#     print("%d" % arr[i]),
-# This code is contributed by Mohit Kumra
+class HeapSort(Heapify):
+    """ Сортировка на базе кучм """
+
+    def __init__(self, ptr_heap):
+        self.heap = ptr_heap[:]
+        self._sorted = list()
+
+    def get_desc_sorted(self):
+        for i in range(len(self.heap) - 1, -1, -1):
+            self._sorted.append(self.heap[0])
+            self.del_element()
+        return self._sorted
+
+
+h = Heapify()
+arr = [random.randint(1, 100) for i in range(17)]
+
+# Heap creation
+for i in range(0, len(arr)):
+    h.add_element(arr[i])
+# print("heap: ", heap)
+
+# print("Проверка на дорогах-1...")
+# fl = True
+# for i in range(len(h.heap)):
+#     if (2 * i + 1 < len(h.heap) and h.heap[i] < h.heap[2 * i + 1]) or (
+#                     2 * i + 2 < len(h.heap) and h.heap[i] < h.heap[2 * i + 2]):
+#         print("Error-1: {}, {}, {}".format(h.heap[i], h.heap[i + 1], h.heap[i + 22]))
+#         fl = False
+# print("Чисто") if fl else print("1 Не пройден!")
+
+hs = HeapSort(h.get_heap())
+arr_sorted = hs.get_desc_sorted()
+print(arr, "\n", arr_sorted)
 
 print("Проверка на дорогах-3...")
 fl = True
-for i in range(len(arr) - 1):
-    if arr[i] < arr[i + 1]:
-        print("Error-3: {}, {}".format(arr[i], arr[i + 1]))
+for i in range(len(arr_sorted) - 1):
+    if arr_sorted[i] < arr_sorted[i + 1]:
+        print("Error-3: {}, {}".format(arr_sorted[i], arr_sorted[i + 1]))
         fl = False
 print("Чисто") if fl else print("3 Не пройден!")
