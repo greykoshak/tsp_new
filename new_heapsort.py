@@ -20,11 +20,13 @@ class Heapify:
                 self.heap[p], self.heap[(p - 1) // 2] = self.heap[(p - 1) // 2], self.heap[p]
                 p = (p - 1) // 2
                 fl_moved = True
-        return self.heap
 
     def del_element(self):
         """ Перестроить кучу после удаления корня дерева """
-        self.heap[0] = self.heap.pop()
+        if len(self.heap) > 1:
+            self.heap[0] = self.heap.pop()
+        else:
+            self.heap = []
         n = len(self.heap)
         p = 0
         fl_moved = True
@@ -40,32 +42,27 @@ class Heapify:
                 self.heap[p], self.heap[ptr_max] = self.heap[ptr_max], self.heap[p]
                 p = ptr_max
                 fl_moved = True
-        return self.heap
 
     def get_heap(self):
         return self.heap
 
-    def get_desc_sorted(self):
-        _sorted = []
-        temp_heap = self.heap[:]
-        for i in range(len(self.heap) - 1, 0, -1):
-            _sorted.append(self.heap[0])
-            h.del_element()
-        self.heap = temp_heap
-        return _sorted
 
-    def get_asc_sorted(self):
-        _sorted = []
-        temp_heap = self.heap[:]
-        for i in range(len(self.heap) - 1, 0, -1):
-            _sorted.append(self.heap[0])
-            h.del_element()
-        self.heap = temp_heap
-        return _sorted[::-1]
+class HeapSort(Heapify):
+    """ Сортировка на базе кучм """
+
+    def __init__(self, ptr_heap):
+        self.heap = ptr_heap[:]
+        self._sorted = list()
+
+    def get_desc_sorted(self):
+        for i in range(len(self.heap) - 1, -1, -1):
+            self._sorted.append(self.heap[0])
+            self.del_element()
+        return self._sorted
 
 
 h = Heapify()
-arr = [random.randint(1, 100_000) for i in range(100_002)]
+arr = [random.randint(1, 100) for i in range(100_000)]
 
 t = time.time()
 
@@ -82,18 +79,15 @@ for i in range(0, len(arr)):
 #         fl = False
 # print("Чисто") if fl else print("1 Не пройден!")
 
-sorted = h.get_desc_sorted()
+hs = HeapSort(h.get_heap())
+sorted = hs.get_desc_sorted()
 
 print("Время выполнения функции: {:5.2f}".format(time.time() - t))
-# print("sorted: ", sorted, "\n", sorted[::-1])
+print("Проверка на дорогах-3...")
+fl = True
+for i in range(len(sorted) - 1):
+    if sorted[i] < sorted[i + 1]:
+        print("Error-3: {}, {}".format(sorted[i], sorted[i + 1]))
+        fl = False
+print("Чисто") if fl else print("3 Не пройден!")
 
-# print("Проверка на дорогах-3...")
-# fl = True
-# for i in range(len(sorted) - 1):
-#     if sorted[i] < sorted[i + 1]:
-#         print("Error-3: {}, {}".format(sorted[i], sorted[i + 1]))
-#         fl = False
-# print("Чисто") if fl else print("3 Не пройден!")
-
-sorted = h.get_asc_sorted()
-print(sorted)
