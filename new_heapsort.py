@@ -2,46 +2,76 @@ import random
 import time
 
 
-def add_element(ptr_heap, x):
-    ptr_heap.append(x)
-    p = len(ptr_heap) - 1
-    fl_moved = True
+class Heapify:
+    """ Создание кучи, сортировка: методы """
 
-    while fl_moved and p > 0:
-        fl_moved = False
-        if ptr_heap[p] > ptr_heap[(p - 1) // 2]:
-            ptr_heap[p], ptr_heap[(p - 1) // 2] = ptr_heap[(p - 1) // 2], ptr_heap[p]
-            p = (p - 1) // 2
-            fl_moved = True
+    def __init__(self, ptr_heap=None):
+        self.heap = list() if ptr_heap is None else ptr_heap
+
+    def add_element(self, x):
+        """ Добавить элемент в кучу """
+        self.heap.append(x)
+        p = len(self.heap) - 1
+        fl_moved = True
+
+        while fl_moved and p > 0:
+            fl_moved = False
+            if self.heap[p] > self.heap[(p - 1) // 2]:
+                self.heap[p], self.heap[(p - 1) // 2] = self.heap[(p - 1) // 2], self.heap[p]
+                p = (p - 1) // 2
+                fl_moved = True
+        return self.heap
+
+    def del_element(self):
+        """ Перестроить кучу после удаления корня дерева """
+        self.heap[0] = self.heap.pop()
+        n = len(self.heap)
+        p = 0
+        fl_moved = True
+
+        while fl_moved and (p * 2 + 1) < n:
+            fl_moved = False
+            left = p * 2 + 1
+            right = left + 1
+            ptr_max = left
+            if (right < n) and self.heap[right] > self.heap[left]:
+                ptr_max = right
+            if self.heap[p] < self.heap[ptr_max]:
+                self.heap[p], self.heap[ptr_max] = self.heap[ptr_max], self.heap[p]
+                p = ptr_max
+                fl_moved = True
+        return self.heap
+
+    def get_heap(self):
+        return self.heap
+
+    def get_desc_sorted(self):
+        _sorted = []
+        temp_heap = self.heap[:]
+        for i in range(len(self.heap) - 1, 0, -1):
+            _sorted.append(self.heap[0])
+            h.del_element()
+        self.heap = temp_heap
+        return _sorted
+
+    def get_asc_sorted(self):
+        _sorted = []
+        temp_heap = self.heap[:]
+        for i in range(len(self.heap) - 1, 0, -1):
+            _sorted.append(self.heap[0])
+            h.del_element()
+        self.heap = temp_heap
+        return _sorted[::-1]
 
 
-def del_element(ptr_heap):
-    ptr_heap[0] = ptr_heap.pop()
-    n = len(ptr_heap)
-    p = 0
-    fl_moved = True
-
-    while fl_moved and (p * 2 + 1) < n:
-        fl_moved = False
-        left = p * 2 + 1
-        right = left + 1
-        ptr_max = left
-        if (right < n) and ptr_heap[right] > ptr_heap[left]:
-            ptr_max = right
-        if ptr_heap[p] < ptr_heap[ptr_max]:
-            ptr_heap[p], ptr_heap[ptr_max] = ptr_heap[ptr_max], ptr_heap[p]
-            p = ptr_max
-            fl_moved = True
-
-
-heap = []
-arr = [random.randint(1, 100_000) for i in range(1_000_002)]
+h = Heapify()
+arr = [random.randint(1, 100_000) for i in range(100_002)]
 
 t = time.time()
 
 # Heap creation
 for i in range(0, len(arr)):
-    add_element(heap, arr[i])
+    h.add_element(arr[i])
 # print("heap: ", heap)
 
 # print("Проверка на дорогах-1...")
@@ -52,17 +82,18 @@ for i in range(0, len(arr)):
 #         fl = False
 # print("Чисто") if fl else print("1 Не пройден!")
 
-sorted = []
-for i in range(len(heap) - 1, 0, -1):
-    sorted.append(heap[0])
-    del_element(heap)
+sorted = h.get_desc_sorted()
+
 print("Время выполнения функции: {:5.2f}".format(time.time() - t))
 # print("sorted: ", sorted, "\n", sorted[::-1])
 
-print("Проверка на дорогах-3...")
-fl = True
-for i in range(len(sorted) - 1):
-    if sorted[i] < sorted[i + 1]:
-        print("Error-3: {}, {}".format(sorted[i], sorted[i + 1]))
-        fl = False
-print("Чисто") if fl else print("3 Не пройден!")
+# print("Проверка на дорогах-3...")
+# fl = True
+# for i in range(len(sorted) - 1):
+#     if sorted[i] < sorted[i + 1]:
+#         print("Error-3: {}, {}".format(sorted[i], sorted[i + 1]))
+#         fl = False
+# print("Чисто") if fl else print("3 Не пройден!")
+
+sorted = h.get_asc_sorted()
+print(sorted)

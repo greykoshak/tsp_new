@@ -14,8 +14,6 @@ def timer(f):
 @timer
 def func(x, y):
     return sqrt(x**2 + y**2)
-    
-      
   
 res1 = func(3, 4)
 print("res = {}".format(res1))
@@ -96,3 +94,6 @@ print(new_list)
 # df = df.drop(df.columns[[1]], axis=1)
 # print(df)
 # print(df.iloc[1][1], df.loc['5']['4'])
+
+https://www.git-tower.com/learn/git/faq/restore-repo-to-previous-revision
+
