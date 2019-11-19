@@ -4,6 +4,8 @@ import pandas as pd
 import logging
 from scipy.spatial.distance import pdist, squareform
 
+import heapsort
+
 GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
                 [1., 0., 10., 15., 2.],
                 [8., 9., 0., 20., 10.],
@@ -30,7 +32,6 @@ class TSP:
         """ Find out final route """
 
         logger = logging.getLogger(__name__)
-
         logger.setLevel(logging.INFO)
 
         # create the logging file handler

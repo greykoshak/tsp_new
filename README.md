@@ -32,7 +32,8 @@ import logging
 
     # create the logging file handler
     fh = logging.FileHandler("raw_tsp.log")
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                '%a, %d %b %Y %H:%M:%S')
     fh.setFormatter(formatter)
 
     # add handler to logger object
