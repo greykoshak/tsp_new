@@ -4,7 +4,7 @@ import pandas as pd
 import logging
 from scipy.spatial.distance import pdist, squareform
 
-import heapsort
+import tsp_heap
 
 GIVEN_MATRIX = [[0., 10., 25., 25., 10.],
                 [1., 0., 10., 15., 2.],
@@ -43,13 +43,15 @@ class TSP:
         logger.addHandler(fh)
         logger.info("Program started {}".format(self.data))
 
+        path_rating = tsp_heap.HeapifyTSP()  # Create empty heap
         route = list()  # Искомый маршрут комивояжера
         first_pass, build_route = True, True  # build_route: Условие работы цикла: пока есть ненулевые элементы
 
         while build_route:
             if first_pass:
                 graph_score = GraphScore(self._df_mat)
-                f0_dict = graph_score.get_estimation()
+                f0_dict = graph_score.get_estimation()  # Route and estimation of f0-approximation
+                path_rating.add_element((f0_dict["d_min"], None))
                 print("\nf0 route is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_min"]))
 
                 d_min_matrix = UtilityTSP.reduction(self._df_mat)
@@ -63,6 +65,10 @@ class TSP:
                 edge = UtilityTSP.graph_edge(self._df_mat)  # Поиск ребра-кандидата графа
                 print("Кандидат: {}".format(edge))
                 eval_data = UtilityTSP.eval_options(self._df_mat, edge, route)
+
+                # !!!!!!!!!!!!!!!!!!!!!!!!! insert path_rating here
+                print("======== ", path_rating.heap[0], "===========")
+
                 if eval_data[0] < eval_data[2]:
                     print("Направо!")
                     self._df_mat = eval_data[1]
@@ -283,6 +289,16 @@ class UtilityTSP:
                 next(filter(lambda x: next_item[1] == x[0], unsorted_route))
             )
         return path
+
+
+class Challenger:
+    """ Remember intermediate state of candidate """
+
+    def __init__(self, v_edge: tuple, v_route: list, v_matrix, v_include: bool):
+        self.edge = v_edge
+        self.route = v_route
+        self.matrix = v_matrix
+        self.include = v_include
 
 
 if __name__ == "__main__":
