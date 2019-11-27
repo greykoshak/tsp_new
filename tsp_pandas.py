@@ -43,7 +43,7 @@ class TSP:
         logger.addHandler(fh)
         logger.info("Program started {}".format(self.data))
 
-        # path_rating = tsp_heap.HeapifyTSP()  # Create empty heap
+        path_rating = tsp_heap.HeapifyTSP()  # Create empty heap
         route = list()  # Искомый маршрут комивояжера
         first_pass, build_route = True, True  # build_route: Условие работы цикла: пока есть ненулевые элементы
 
@@ -51,7 +51,7 @@ class TSP:
             if first_pass:
                 graph_score = GraphScore(self._df_mat)
                 f0_dict = graph_score.get_estimation()  # Route and estimation of f0-approximation
-                # path_rating.add_element((f0_dict["d_f0"], None))
+                path_rating.add_element((f0_dict["d_f0"], None))
                 print("\nf0 route is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_f0"]))
 
                 d_min_matrix = UtilityTSP.reduction(self._df_mat)
@@ -68,21 +68,35 @@ class TSP:
                 eval_data = UtilityTSP.eval_options(self._df_mat, edge, route)
                 key_right = d_parent + eval_data[0]
                 key_left = d_parent + eval_data[2]
+                fl_heap = False
 
-                # !!!!!!!!!!!!!!!!!!!!!!!!! insert path_rating here
-                # if all(map(lambda x: x >= f0_dict["d_f0"],
-                #            [path_rating.heap[0][0], key_right, key_left])):
-                #     pass
-                # elif all(map(lambda x: path_rating.heap[0][0] < x, [key_right, key_left])):
-                #
-                #     pass
-                if key_right < key_left:
+                # Три точки больше f0: f0 - найденный вариант
+                if all(map(lambda x: x >= f0_dict["d_f0"],
+                           [path_rating.heap[0][0], key_right, key_left])):
+                    build_route = False
+                # Вершина кучи - следующая точка рассмотрения
+                elif all(map(lambda x: path_rating.heap[0][0] < x, [key_right, key_left])):
+                    fl_incl = key_left <= key_right
+                    path_rating.add_element((key_left if fl_incl else key_right,
+                                             SaveState(edge, route, self._df_mat, fl_incl)))
+
+                    edge = path_rating.heap[0][1].edge
+                    route = path_rating.heap[0][1].route
+                    self._df_mat = path_rating.heap[0][1].matrix
+                    fl_incl = path_rating.heap[0][1].include
+
+                    path_rating.del_element()
+                    fl_heap = True
+
+                # edge - не включать в маршрут
+                if (fl_heap and not fl_incl) or (not fl_heap and key_right < key_left):
                     print("Направо!")
                     # if key_left < f0_dict["d_f0"]:
                     #     path_rating.add_element((key_left,
                     #                             Challenger(edge, route, eval_data[3], True)))
                     self._df_mat = eval_data[1]
                     d_parent = key_right
+                # edge - включить в маршрут
                 else:
                     print("Налево!")
                     # if key_right < f0_dict["d_f0"]:
@@ -100,6 +114,11 @@ class TSP:
             route = UtilityTSP.form_final_route(self._df_mat, route)
             route = UtilityTSP.sort_route(route)
 
+            final_est = graph_score.get_route_estimation(route)
+            print(route, final_est)
+            logger.info("Final route is \n{}, {}".format(route, final_est))
+        else:
+            route = f0_dict["path0"]
             final_est = graph_score.get_route_estimation(route)
             print(route, final_est)
             logger.info("Final route is \n{}, {}".format(route, final_est))
@@ -306,7 +325,7 @@ class UtilityTSP:
         return path
 
 
-class Challenger:
+class SaveState:
     """ Remember intermediate state of candidate """
 
     def __init__(self, v_edge: tuple, v_route: list, v_matrix, v_include: bool):
