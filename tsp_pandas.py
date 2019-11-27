@@ -43,7 +43,7 @@ class TSP:
         logger.addHandler(fh)
         logger.info("Program started {}".format(self.data))
 
-        path_rating = tsp_heap.HeapifyTSP()  # Create empty heap
+        # path_rating = tsp_heap.HeapifyTSP()  # Create empty heap
         route = list()  # Искомый маршрут комивояжера
         first_pass, build_route = True, True  # build_route: Условие работы цикла: пока есть ненулевые элементы
 
@@ -51,7 +51,7 @@ class TSP:
             if first_pass:
                 graph_score = GraphScore(self._df_mat)
                 f0_dict = graph_score.get_estimation()  # Route and estimation of f0-approximation
-                path_rating.add_element((f0_dict["d_f0"], None))
+                # path_rating.add_element((f0_dict["d_f0"], None))
                 print("\nf0 route is: {}, it's score is: {}".format(f0_dict["path0"], f0_dict["d_f0"]))
 
                 d_min_matrix = UtilityTSP.reduction(self._df_mat)
@@ -70,24 +70,24 @@ class TSP:
                 key_left = d_parent + eval_data[2]
 
                 # !!!!!!!!!!!!!!!!!!!!!!!!! insert path_rating here
-                if all(map(lambda x: x >= f0_dict["d_f0"],
-                           [path_rating.heap[0][0], key_right, key_left])):
-                    pass
-                elif all(map(lambda x: path_rating.heap[0][0] < x, [key_right, key_left])):
-                    
-                    pass
-                elif key_right < key_left:
+                # if all(map(lambda x: x >= f0_dict["d_f0"],
+                #            [path_rating.heap[0][0], key_right, key_left])):
+                #     pass
+                # elif all(map(lambda x: path_rating.heap[0][0] < x, [key_right, key_left])):
+                #
+                #     pass
+                if key_right < key_left:
                     print("Направо!")
-                    if key_left < f0_dict["d_f0"]:
-                        path_rating.add_element((key_left,
-                                                Challenger(edge, route, eval_data[3], True)))
+                    # if key_left < f0_dict["d_f0"]:
+                    #     path_rating.add_element((key_left,
+                    #                             Challenger(edge, route, eval_data[3], True)))
                     self._df_mat = eval_data[1]
                     d_parent = key_right
                 else:
                     print("Налево!")
-                    if key_right < f0_dict["d_f0"]:
-                        path_rating.add_element((key_right,
-                                                 Challenger(edge, route, eval_data[1], False)))
+                    # if key_right < f0_dict["d_f0"]:
+                    #     path_rating.add_element((key_right,
+                    #                              Challenger(edge, route, eval_data[1], False)))
                     self._df_mat = eval_data[3]
                     d_parent = key_left
                     route.append(edge)
